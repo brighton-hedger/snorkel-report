@@ -1,0 +1,662 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #e0f7f4;
+  margin: 0;
+  padding: 0;
+}
+
+/* Navigation */
+nav {
+  background-color: #d6f4f1;
+  padding: 16px 20px;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  border-bottom: 2px solid #b8ead7;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+nav a {
+  text-decoration: none;
+  color: #2aa198;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+nav a:hover {
+  background-color: #cce8e5;
+}
+
+nav a.active {
+  background-color: #2aa198;
+  color: white;
+}
+
+.daylight-warning {
+  max-width: 1200px;
+  margin: 14px auto 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #fff4d6;
+  border: 1px solid #e8c96b;
+  color: #5c4700;
+  font-size: 14px;
+  line-height: 1.5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.daylight-warning strong {
+  color: #7a5b00;
+}
+
+/* Main Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ==================== REPORT PAGE ==================== */
+.header-centered {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  background-color: #d6f4f1;
+  border-radius: 12px;
+  padding: 20px 16px;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 20px;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.title-block {
+  text-align: center;
+  flex: 1;
+  min-width: 200px;
+}
+
+.title-block h1 {
+  font-size: 28px;
+  margin: 0;
+  font-weight: 700;
+  color: #000;
+}
+
+.title-block h2 {
+  font-size: 16px;
+  margin: 4px 0 0;
+  color: #555;
+}
+
+.island-summary {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border: 1px solid #ccc;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  justify-content: space-between;
+  text-align: left;
+  max-width: 700px;
+}
+
+.island-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.island-header h3 {
+  margin: 0;
+  font-size: 19px;
+  color: #2aa198;
+}
+
+.snorkel-wrapper {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: none;
+}
+
+.shore-section {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(42, 161, 152, 0.18);
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(42, 161, 152, 0.08);
+  overflow: hidden;
+}
+
+.shore-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, rgba(214, 244, 241, 0.95), rgba(255, 255, 255, 0.96));
+}
+
+.shore-summary::-webkit-details-marker {
+  display: none;
+}
+
+.shore-summary-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.shore-summary-title h3 {
+  margin: 0;
+  font-size: 24px;
+  color: #176e69;
+}
+
+.shore-summary-title p {
+  margin: 6px 0 0;
+  color: #4f6e6b;
+  font-size: 14px;
+}
+
+.shore-summary-meta {
+  text-align: right;
+  min-width: 120px;
+}
+
+.shore-score {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.shore-summary-label {
+  margin-top: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5f7f7b;
+}
+
+.shore-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.shore-highlights span {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(42, 161, 152, 0.14);
+  font-size: 12px;
+  color: #416360;
+}
+
+.shore-details {
+  padding: 0 16px 18px;
+}
+
+.snorkel-group-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 700px) {
+  .snorkel-group-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1050px) {
+  .snorkel-group-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.snorkel-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  border: 1px solid #ccc;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  justify-content: space-between;
+}
+
+.snorkel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.snorkel-header h3 {
+  margin: 0;
+  font-size: 19px;
+  color: #2aa198;
+}
+
+.snorkel-score {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.snorkel-summary ul,
+.island-conditions ul {
+  margin: 4px 0 0 14px;
+  padding: 0;
+  list-style-type: disc;
+}
+
+.snorkel-summary li,
+.island-conditions li {
+  margin-bottom: 3px;
+  font-size: 14px;
+}
+
+.region-towns {
+  font-size: 13px;
+  font-weight: bold;
+  color: #444;
+  margin-bottom: 8px;
+}
+
+.best-time {
+  font-size: 16px;
+  color: #2aa198;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* ==================== DAY FORECAST PAGE ==================== */
+.forecast-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.forecast-header h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #000;
+}
+
+.forecast-date {
+  font-size: 18px;
+  font-weight: 600;
+  color: #555;
+  margin-top: 4px;
+}
+
+.day-forecast-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 auto 16px;
+  max-width: 1200px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(42, 161, 152, 0.18);
+  border-radius: 16px;
+  padding: 10px 12px;
+  backdrop-filter: blur(8px);
+}
+
+.day-tabs {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.day-tab {
+  border: 1px solid rgba(42, 161, 152, 0.22);
+  background: #ffffff;
+  color: #2f4f4f;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.day-tab:hover,
+.day-tab:focus-visible {
+  background: #ecfbf8;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.day-tab.active {
+  background: #2aa198;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(42, 161, 152, 0.18);
+}
+
+.day-nav-button {
+  border: none;
+  background: #2aa198;
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+}
+
+.day-nav-button:hover,
+.day-nav-button:focus-visible {
+  background: #23867f;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.day-nav-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+.scroll-wrapper {
+  overflow-x: auto;
+  width: 100%;
+  margin: 20px 0;
+  display: flex;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #2aa198 rgba(42, 161, 152, 0.12);
+}
+
+.scroll-wrapper::-webkit-scrollbar {
+  height: 12px;
+}
+
+.scroll-wrapper::-webkit-scrollbar-track {
+  background: rgba(42, 161, 152, 0.12);
+  border-radius: 999px;
+}
+
+.scroll-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(42, 161, 152, 0.65);
+  border-radius: 999px;
+}
+
+.day-section {
+  flex: 0 0 100%;
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  scroll-snap-align: start;
+}
+
+.day-section h2 {
+  text-align: center;
+  color: #555;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 20px 0;
+}
+
+.chart-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 15px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.chart-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.chart-container h3 {
+  color: #2aa198;
+  font-size: 16px;
+  margin: 0 0 10px 0;
+  text-align: center;
+}
+
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 600px) {
+  .chart-wrapper {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==================== WEEK FORECAST PAGE ==================== */
+.weekly-section {
+  background: #e0f7f4;
+  width: 100%;
+  color: #000000;
+  margin: 0 auto;
+}
+
+.weekly-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.weekly-header h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: #000;
+}
+
+.week-range {
+  margin-top: 5px;
+  font-weight: 600;
+  font-size: 18px;
+  color: #555;
+}
+
+.weekly-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.weekly-table th,
+.weekly-table td {
+  padding: 10px 14px;
+  font-size: 22px;
+  font-weight: 600;
+  color: #000000;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.weekly-table th {
+  background-color: #d6f4f1;
+  color: #2aa198;
+  font-size: 25px;
+  border-bottom: 2px solid rgba(42, 161, 152, 0.18);
+}
+
+.weekly-table td.region {
+  text-align: left;
+  font-weight: 700;
+  color: #000000;
+  font-size: 20px;
+  white-space: nowrap;
+}
+
+.weekly-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+/* ==================== FOOTER ==================== */
+footer {
+  font-size: 11px;
+  color: #777;
+  margin-top: 30px;
+  padding: 20px;
+  text-align: center;
+  border-top: 1px solid #d0e8e5;
+}
+
+/* ==================== LOADING STATE ==================== */
+.loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2em;
+  font-style: italic;
+  color: #666;
+}
+
+.error-message {
+  color: #cc3300;
+  font-size: 16px;
+  text-align: center;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #ffe6e6;
+  border-radius: 8px;
+  display: none;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .header-centered {
+    flex-direction: column;
+  }
+
+  .title-block h1 {
+    font-size: 24px;
+  }
+
+  .title-block h2 {
+    font-size: 14px;
+  }
+
+  .snorkel-wrapper {
+    gap: 12px;
+    padding: 8px;
+  }
+
+  .shore-summary {
+    padding: 16px;
+  }
+
+  .shore-summary-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .shore-summary-meta {
+    text-align: left;
+    min-width: 0;
+  }
+
+  .weekly-table th,
+  .weekly-table td {
+    padding: 6px 8px;
+    font-size: 20px;
+  }
+
+  .weekly-table th {
+    font-size: 22px;
+  }
+
+  nav {
+    gap: 15px;
+    padding: 12px 16px;
+  }
+
+  nav a {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+
+  .forecast-header h1 {
+    font-size: 24px;
+  }
+
+  .day-forecast-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .day-tabs {
+    order: -1;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 12px;
+  }
+
+  nav a {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  nav {
+    gap: 10px;
+  }
+
+  .daylight-warning {
+    margin-top: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .day-tab,
+  .day-nav-button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .day-nav-button {
+    flex: 1 1 140px;
+  }
+}

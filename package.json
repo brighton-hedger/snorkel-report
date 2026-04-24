@@ -1,0 +1,23 @@
+{
+  "name": "oahu-snorkel-report",
+  "version": "1.0.0",
+  "description": "Real-time snorkel report website for Oahu, Hawaii",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "serve": "npx http-server"
+  },
+  "keywords": [
+    "snorkel",
+    "hawaii",
+    "oahu",
+    "ocean",
+    "marine",
+    "forecast"
+  ],
+  "author": "Brighton Hedger",
+  "license": "MIT",
+  "dependencies": {
+    "chart.js": "^3.9.1"
+  }
+}
