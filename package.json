@@ -16,8 +16,5 @@
     "forecast"
   ],
   "author": "Brighton Hedger",
-  "license": "MIT",
-  "dependencies": {
-    "chart.js": "^3.9.1"
-  }
+  "license": "MIT"
 }
