@@ -304,26 +304,35 @@
       const past = predictions.filter((point) => new Date(point.t) <= now);
       const current = past[past.length - 1];
       const next = future[0];
+      const normalizedPredictions = predictions
+        .map((point) => ({
+          time: point.t,
+          value: parseFloat(point.v),
+          type: point.type || null
+        }))
+        .filter((point) => Number.isFinite(point.value));
 
       if (!current || !next) {
-        return { tideSummary: null, isRising: false };
+        return { tideSummary: null, isRising: false, predictions: normalizedPredictions, currentLevel: null };
       }
 
       const currentValue = parseFloat(current.v);
       const nextValue = parseFloat(next.v);
       if (!Number.isFinite(currentValue) || !Number.isFinite(nextValue)) {
-        return { tideSummary: null, isRising: false };
+        return { tideSummary: null, isRising: false, predictions: normalizedPredictions, currentLevel: null };
       }
 
       const isRising = nextValue > currentValue;
       const direction = next.type === "H" ? "up" : "down";
       return {
         tideSummary: `${currentValue.toFixed(1)} ft now, ${direction} to ${nextValue.toFixed(1)} ft @ ${new Date(next.t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
-        isRising
+        isRising,
+        predictions: normalizedPredictions,
+        currentLevel: currentValue
       };
     } catch (error) {
       console.error("Tide error:", error);
-      return { tideSummary: null, isRising: false };
+      return { tideSummary: null, isRising: false, predictions: [], currentLevel: null };
     }
   }
 
