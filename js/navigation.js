@@ -223,9 +223,12 @@ function initializeMobileMenu() {
   const mobilePanel = document.querySelector('.nav-mobile-panel');
   const overlay = document.querySelector('.nav-overlay');
 
-  if (!hamburger || !mobilePanel || !overlay) {
+  if (!hamburger || !mobilePanel || !overlay || hamburger.dataset.mobileReady === 'true') {
     return;
   }
+
+  hamburger.dataset.mobileReady = 'true';
+  document.body.style.removeProperty('overflow');
 
   // Toggle menu on hamburger click
   hamburger.addEventListener('click', () => {
@@ -253,12 +256,17 @@ function initializeMobileMenu() {
     }
   });
 
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 600) {
+      closeMobileMenu();
+    }
+  });
+
   function openMobileMenu() {
     mobilePanel.classList.add('open');
     overlay.classList.add('open');
     hamburger.classList.add('active');
     hamburger.setAttribute('aria-expanded', 'true');
-    document.body.style.overflow = 'hidden';
   }
 
   function closeMobileMenu() {
@@ -266,7 +274,7 @@ function initializeMobileMenu() {
     overlay.classList.remove('open');
     hamburger.classList.remove('active');
     hamburger.setAttribute('aria-expanded', 'false');
-    document.body.style.overflow = '';
+    document.body.style.removeProperty('overflow');
   }
 }
 
