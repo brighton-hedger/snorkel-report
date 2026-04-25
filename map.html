@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Map - Oʻahu Snorkel Report</title>
+  <link rel="icon" type="image/svg+xml" href="assets/snorkeling_turtle_favicon.svg" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
@@ -35,25 +36,319 @@
     }
     .region-popup {
       font-family: 'Montserrat', sans-serif;
+      min-width: 250px;
+      max-width: 300px;
+    }
+    .leaflet-popup-content {
+      max-height: min(70vh, 560px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding-right: 4px;
+    }
+    .leaflet-popup-content::-webkit-scrollbar {
+      width: 10px;
+    }
+    .leaflet-popup-content::-webkit-scrollbar-track {
+      background: rgba(42, 161, 152, 0.12);
+      border-radius: 999px;
+    }
+    .leaflet-popup-content::-webkit-scrollbar-thumb {
+      background: rgba(42, 161, 152, 0.5);
+      border-radius: 999px;
+    }
+    .map-popup-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
     }
     .region-popup h3 {
-      margin: 0 0 8px 0;
+      margin: 0;
       color: #2aa198;
       font-size: 18px;
     }
     .region-popup .towns {
-      font-size: 14px;
-      color: #555;
-      margin-bottom: 8px;
+      font-size: 12px;
+      color: #62706e;
+      margin-top: 4px;
     }
     .region-popup .score {
-      font-size: 24px;
-      font-weight: bold;
+      min-width: 86px;
+      text-align: center;
+      border: 2px solid currentColor;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 18px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.92);
     }
-    .region-popup .conditions {
+    .map-popup-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .map-best-window-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #f3fbfa;
+      border: 1px solid rgba(42, 161, 152, 0.1);
+      min-height: 44px;
+      margin-bottom: 10px;
+    }
+    .map-best-window-head {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .map-best-window-head strong {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #688381;
+      line-height: 1;
+    }
+    .map-best-window-banner span {
       font-size: 13px;
-      margin-top: 8px;
-      color: #333;
+      color: #204e4a;
+      white-space: nowrap;
+    }
+    .map-best-window-banner em {
+      font-style: normal;
+      font-weight: 700;
+    }
+    .map-condition-chip {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #f3fbfa;
+      border: 1px solid rgba(42, 161, 152, 0.1);
+    }
+    .map-condition-head {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .map-tide-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: #f3fbfa;
+      border: 1px solid rgba(42, 161, 152, 0.1);
+      margin-bottom: 10px;
+    }
+    .map-tide-summary-head {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+    .map-tide-summary-head strong {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #688381;
+      line-height: 1;
+    }
+    .map-tide-summary-body {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .map-tide-trend {
+      display: inline-flex;
+      align-self: flex-start;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(79, 149, 214, 0.14);
+      color: #2f5f92;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .map-tide-summary-text {
+      font-size: 13px;
+      color: #204e4a;
+      line-height: 1.35;
+    }
+    .map-chip-icon {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+      display: inline-block;
+    }
+    .map-chip-icon-inline {
+      width: 16px;
+      height: 16px;
+      margin-right: 6px;
+    }
+    .map-condition-head strong {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #688381;
+      line-height: 1;
+    }
+    .map-condition-chip span {
+      font-size: 13px;
+      color: #204e4a;
+      line-height: 1.25;
+    }
+    .map-popup-unavailable {
+      font-size: 13px;
+      color: #54708e;
+    }
+    .map-tide-disclosure {
+      border-radius: 12px;
+      border: 1px solid rgba(96, 146, 214, 0.14);
+      background: rgba(247, 252, 255, 0.86);
+      overflow: hidden;
+    }
+    .map-tide-toggle {
+      cursor: pointer;
+      list-style: none;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #45678c;
+      background: linear-gradient(180deg, #f7fcff, #eef8ff);
+    }
+    .map-tide-toggle::-webkit-details-marker {
+      display: none;
+    }
+    .map-tide-disclosure-body {
+      padding: 10px;
+      border-top: 1px solid rgba(96, 146, 214, 0.12);
+    }
+    .map-tide-chart-card {
+      border-radius: 14px;
+      background: linear-gradient(180deg, #f7fcff, #eef8ff);
+      border: 1px solid rgba(96, 146, 214, 0.14);
+      padding: 10px 12px 10px;
+      width: 100%;
+      margin-top: 0;
+      box-sizing: border-box;
+    }
+    .map-tide-chart-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      color: #45678c;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .map-tide-chart-heading span:first-child {
+      display: inline-flex;
+      align-items: center;
+    }
+    .map-tide-chart {
+      width: 100%;
+      height: 210px;
+      overflow: visible;
+      display: block;
+      margin: 0 auto;
+    }
+    .map-tide-curve {
+      fill: none;
+      stroke: #4f95d6;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .map-tide-point-high {
+      fill: #1eaa5a;
+    }
+    .map-tide-point-low {
+      fill: #2f6fb6;
+    }
+    .map-tide-point-now {
+      fill: #f08c2e;
+      stroke: #ffffff;
+      stroke-width: 2;
+    }
+    .map-tide-hit-area {
+      fill: transparent;
+      pointer-events: all;
+    }
+    .map-tide-hover-bubble {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.16s ease;
+      pointer-events: none;
+    }
+    .map-tide-marker-group:hover .map-tide-hover-bubble,
+    .map-tide-marker-group:focus .map-tide-hover-bubble,
+    .map-tide-marker-group:focus-visible .map-tide-hover-bubble {
+      opacity: 1;
+      visibility: visible;
+    }
+    .map-tide-label-box {
+      fill: rgba(255, 255, 255, 0.92);
+      stroke: rgba(96, 146, 214, 0.2);
+      stroke-width: 1;
+    }
+    .map-tide-label-box-high {
+      fill: rgba(30, 170, 90, 0.14);
+      stroke: rgba(30, 170, 90, 0.42);
+    }
+    .map-tide-label-box-low {
+      fill: rgba(47, 111, 182, 0.14);
+      stroke: rgba(47, 111, 182, 0.42);
+    }
+    .map-tide-label-value {
+      font-size: 11px;
+      fill: #295784;
+      font-weight: 700;
+    }
+    .map-tide-label-value-high {
+      fill: #177d43;
+    }
+    .map-tide-label-value-low {
+      fill: #245999;
+    }
+    .map-tide-label-time {
+      font-size: 9px;
+      fill: #6381a0;
+    }
+    .map-tide-label-time-high {
+      fill: #2f9157;
+    }
+    .map-tide-label-time-low {
+      fill: #4d79b3;
+    }
+    .map-tide-now-badge {
+      fill: rgba(240, 140, 46, 0.16);
+      stroke: rgba(240, 140, 46, 0.45);
+      stroke-width: 1;
+    }
+    .map-tide-now-text {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      fill: #b25b07;
+    }
+    .map-tide-fallback {
+      font-size: 13px;
+      color: #54708e;
     }
     .legend {
       background: white;

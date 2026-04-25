@@ -44,7 +44,7 @@
       currentExposure: 0.7
     },
     {
-      title: "Ala Moana/Magic Island",
+      title: "Ala Moana",
       towns: "(Ala Moana Bowls, Magic Island)",
       lat: 21.2857,
       lng: -157.8490,
@@ -63,7 +63,7 @@
       lat: 21.2767,
       lng: -157.6930,
       protected: true,
-      shore: "East",
+      shore: "South",
       stationId: "1612340",
       shelterDirections: ["E", "SE"],
       preferredSwellDirections: ["S", "SW"],
@@ -294,11 +294,13 @@
   }
 
   async function fetchTide(stationId) {
-    const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=today&station=${stationId}&product=predictions&datum=MLLW&interval=hilo&units=english&time_zone=lst_ldt&format=json`;
+    const hiloUrl = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=today&station=${stationId}&product=predictions&datum=MLLW&interval=hilo&units=english&time_zone=lst_ldt&format=json`;
+    const curveUrl = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?date=today&station=${stationId}&product=predictions&datum=MLLW&interval=6&units=english&time_zone=lst_ldt&format=json`;
 
     try {
-      const data = await fetchJson(url);
-      const predictions = Array.isArray(data.predictions) ? data.predictions : [];
+      const [hiloData, curveData] = await Promise.all([fetchJson(hiloUrl), fetchJson(curveUrl)]);
+      const predictions = Array.isArray(hiloData.predictions) ? hiloData.predictions : [];
+      const curvePredictions = Array.isArray(curveData.predictions) ? curveData.predictions : [];
       const now = new Date();
       const future = predictions.filter((point) => new Date(point.t) > now);
       const past = predictions.filter((point) => new Date(point.t) <= now);
@@ -311,15 +313,34 @@
           type: point.type || null
         }))
         .filter((point) => Number.isFinite(point.value));
+      const normalizedCurvePredictions = curvePredictions
+        .map((point) => ({
+          time: point.t,
+          value: parseFloat(point.v),
+          type: null
+        }))
+        .filter((point) => Number.isFinite(point.value));
 
       if (!current || !next) {
-        return { tideSummary: null, isRising: false, predictions: normalizedPredictions, currentLevel: null };
+        return {
+          tideSummary: null,
+          isRising: false,
+          predictions: normalizedPredictions,
+          curvePredictions: normalizedCurvePredictions,
+          currentLevel: null
+        };
       }
 
       const currentValue = parseFloat(current.v);
       const nextValue = parseFloat(next.v);
       if (!Number.isFinite(currentValue) || !Number.isFinite(nextValue)) {
-        return { tideSummary: null, isRising: false, predictions: normalizedPredictions, currentLevel: null };
+        return {
+          tideSummary: null,
+          isRising: false,
+          predictions: normalizedPredictions,
+          curvePredictions: normalizedCurvePredictions,
+          currentLevel: null
+        };
       }
 
       const isRising = nextValue > currentValue;
@@ -328,11 +349,12 @@
         tideSummary: `${currentValue.toFixed(1)} ft now, ${direction} to ${nextValue.toFixed(1)} ft @ ${new Date(next.t).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
         isRising,
         predictions: normalizedPredictions,
+        curvePredictions: normalizedCurvePredictions,
         currentLevel: currentValue
       };
     } catch (error) {
       console.error("Tide error:", error);
-      return { tideSummary: null, isRising: false, predictions: [], currentLevel: null };
+      return { tideSummary: null, isRising: false, predictions: [], curvePredictions: [], currentLevel: null };
     }
   }
 

@@ -1,4 +1,3 @@
-// ==================== ENHANCED REPORT SCRIPT ====================
 const {
   REGIONS,
   fetchForecast,
@@ -10,6 +9,24 @@ const {
 } = window.SnorkelShared;
 
 const SHORE_ORDER = ["East", "South", "North", "West"];
+const TIDE_CHART_WIDTH = 320;
+const TIDE_CHART_HEIGHT = 210;
+const TIDE_CHART_PAD_X = 18;
+const TIDE_CHART_PAD_TOP = 42;
+const TIDE_CHART_PAD_BOTTOM = 48;
+const DAYLIGHT_START_HOUR = 6;
+const DAYLIGHT_END_HOUR = 18;
+const ICONS = {
+  wind: "assets/wind_emoji.svg",
+  waves: "assets/wave_emoji.svg",
+  sea: "assets/water_temp_emoji.svg",
+  current: "assets/current_emoji.svg",
+  weatherSun: "assets/sun_emoji.svg",
+  weatherCloud: "assets/cloud_emoji.svg",
+  weatherRain: "assets/rain_emoji.svg",
+  bestWindow: "assets/best_time_emoji.svg",
+  tide: "assets/tide_emoji.svg"
+};
 
 function getSafeMetrics(metrics) {
   return {
@@ -30,7 +47,114 @@ function getSafeMetrics(metrics) {
 }
 
 function formatClock(value) {
-  return new Date(value).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return new Date(value).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function estimateLabelWidth(text, perChar, base) {
+  return text.length * perChar + base;
+}
+
+function boxesOverlap(boxA, boxB, gap = 10) {
+  return !(
+    boxA.right + gap <= boxB.left ||
+    boxB.right + gap <= boxA.left ||
+    boxA.bottom + gap <= boxB.top ||
+    boxB.bottom + gap <= boxA.top
+  );
+}
+
+function boxHitsCurve(box, samplePoints) {
+  return samplePoints.some(
+    (point) =>
+      point.x >= box.left - 10 &&
+      point.x <= box.right + 10 &&
+      point.y >= box.top - 10 &&
+      point.y <= box.bottom + 10
+  );
+}
+
+function getCurveSlice(box, samplePoints) {
+  return samplePoints.filter((point) => point.x >= box.left - 6 && point.x <= box.right + 6);
+}
+
+function getLocalCurveStats(box, samplePoints) {
+  const localCurve = getCurveSlice(box, samplePoints);
+  if (!localCurve.length) {
+    return null;
+  }
+
+  return {
+    minY: Math.min(...localCurve.map((point) => point.y)),
+    maxY: Math.max(...localCurve.map((point) => point.y))
+  };
+}
+
+function getWeatherChip(metrics) {
+  if (Number.isFinite(metrics.rain) && metrics.rain > 0.01) {
+    return {
+      icon: ICONS.weatherRain,
+      label: "Weather",
+      value: `${metrics.rain.toFixed(2)} in of rain`
+    };
+  }
+
+  if ((metrics.clouds ?? 0) > 60) {
+    return {
+      icon: ICONS.weatherCloud,
+      label: "Weather",
+      value: `${Math.round(metrics.clouds)}% cloud cover`
+    };
+  }
+
+  return {
+    icon: ICONS.weatherSun,
+    label: "Weather",
+    value: `${Math.round(metrics.clouds)}% cloud cover`
+  };
+}
+
+function findBestDisplayTime(hourlyData, region) {
+  const sharedBest = findBestSnorkelTime(hourlyData || [], region);
+  if (sharedBest?.time && sharedBest.time !== "N/A") {
+    return sharedBest;
+  }
+
+  const now = Date.now();
+  const daylightEntries = (hourlyData || []).filter(
+    (entry) => entry.hour >= DAYLIGHT_START_HOUR && entry.hour <= DAYLIGHT_END_HOUR
+  );
+  const futureDaylightEntries = daylightEntries.filter((entry) => new Date(entry.time).getTime() > now);
+  const candidateEntries = futureDaylightEntries.length ? futureDaylightEntries : daylightEntries;
+
+  if (!candidateEntries.length) {
+    return { time: "N/A", score: 0 };
+  }
+
+  let bestEntry = null;
+  let bestScore = -Infinity;
+  for (const entry of candidateEntries) {
+    const score = calculateRegionalScore(entry, region);
+    if (score > bestScore) {
+      bestScore = score;
+      bestEntry = entry;
+    }
+  }
+
+  if (!bestEntry) {
+    return { time: "N/A", score: 0 };
+  }
+
+  return {
+    time: formatClock(bestEntry.time),
+    score: bestScore
+  };
 }
 
 function buildConditionChips(metrics, tideData, bestTime, bestScore) {
@@ -38,7 +162,7 @@ function buildConditionChips(metrics, tideData, bestTime, bestScore) {
 
   if (Number.isFinite(metrics.windSpeed)) {
     chips.push({
-      emoji: "💨",
+      icon: ICONS.wind,
       label: "Wind",
       value: `${metrics.windSpeed.toFixed(0)} mph ${toCardinal(metrics.windDir)}`
     });
@@ -46,7 +170,7 @@ function buildConditionChips(metrics, tideData, bestTime, bestScore) {
 
   if (Number.isFinite(metrics.waveHeight)) {
     chips.push({
-      emoji: "🌊",
+      icon: ICONS.waves,
       label: "Waves",
       value: `${metrics.waveHeight.toFixed(1)} ft`
     });
@@ -54,165 +178,386 @@ function buildConditionChips(metrics, tideData, bestTime, bestScore) {
 
   if (Number.isFinite(metrics.temp)) {
     chips.push({
-      emoji: "🌡️",
+      icon: ICONS.sea,
       label: "Sea",
-      value: `${metrics.temp.toFixed(0)}F`
+      value: `${metrics.temp.toFixed(0)}°F`
     });
   }
 
   if (Number.isFinite(metrics.currentSpeed)) {
     chips.push({
-      emoji: "🧭",
+      icon: ICONS.current,
       label: "Current",
       value: `${metrics.currentSpeed.toFixed(1)} mph ${toCardinal(metrics.currentDir)}`
     });
   }
 
-  chips.push({
-    emoji: metrics.clouds > 60 ? "☁️" : "☀️",
-    label: "Sky",
-    value: `${Math.round(metrics.clouds)}% cloud`
-  });
+  chips.push(getWeatherChip(metrics));
 
-  if (Number.isFinite(metrics.rain) && metrics.rain > 0.01) {
+  if (Number.isFinite(metrics.swellHeight)) {
+    const swellParts = [`${metrics.swellHeight.toFixed(1)} ft`];
+    if (Number.isFinite(metrics.swellPeriod) && metrics.swellPeriod > 0) {
+      swellParts.push(`${metrics.swellPeriod.toFixed(0)}s`);
+    }
+
     chips.push({
-      emoji: "🌦️",
-      label: "Rain",
-      value: `${metrics.rain.toFixed(2)} in`
+      icon: ICONS.waves,
+      label: "Swell",
+      value: swellParts.join(" · ")
     });
   }
 
   chips.push({
-    emoji: "⏱️",
-    label: "Best window",
+    icon: ICONS.bestWindow,
+    label: "Next best time",
     value: `${bestTime} · ${bestScore}/10`
   });
 
-  if (tideData?.tideSummary) {
+  if (tideData?.tideSummary && chips.length < 6) {
     chips.push({
-      emoji: tideData.isRising ? "📈" : "📉",
+      icon: ICONS.tide,
       label: "Tide",
       value: tideData.isRising ? "Rising" : "Falling"
     });
   }
 
-  return chips.slice(0, 6);
+  return chips.filter((chip) => chip.label !== "Next best time").slice(0, 6);
 }
 
-function buildTideChart(tideData) {
-  const points = (tideData?.predictions || []).map((point) => ({
-    ...point,
-    date: new Date(point.time)
-  }));
+function buildConditionBreakdown(metrics, region, tideData, scoreDetails = []) {
+  const good = [];
+  const bad = [];
 
-  if (points.length < 2) {
-    return `<div class="tide-fallback">${tideData?.tideSummary || "Tide data unavailable"}</div>`;
+  if (region.protected) {
+    good.push(`${region.title} gets some protection from its cove and shoreline shape.`);
   }
 
-  const startTime = points[0].date.getTime();
-  const endTime = points[points.length - 1].date.getTime();
-  const duration = Math.max(endTime - startTime, 1);
-  const values = points.map((point) => point.value);
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
-  const valueRange = Math.max(maxValue - minValue, 0.25);
-  const width = 280;
-  const height = 96;
-  const padX = 14;
-  const padY = 12;
+  if (metrics.waveHeight <= 1.5) {
+    good.push(`Small waves near ${region.title} should make entry and visibility friendlier.`);
+  } else if (metrics.waveHeight >= 4) {
+    bad.push(`Wave height is elevated here, which can make entry and inside conditions rougher.`);
+  }
 
-  const xAt = (time) => padX + ((time - startTime) / duration) * (width - padX * 2);
-  const yAt = (value) => height - padY - ((value - minValue) / valueRange) * (height - padY * 2);
+  if (metrics.swellHeight <= 1.75) {
+    good.push(`Lower swell is helping keep this sub-region calmer.`);
+  } else if (metrics.swellHeight >= 2.5) {
+    bad.push(`Open-ocean swell is adding extra movement in this area.`);
+  }
 
-  const samples = [];
-  for (let i = 0; i < points.length - 1; i += 1) {
-    const left = points[i];
-    const right = points[i + 1];
-    const leftTime = left.date.getTime();
-    const rightTime = right.date.getTime();
-    const segmentDuration = Math.max(rightTime - leftTime, 1);
-    const segmentSteps = 20;
+  if (metrics.windSpeed <= 8) {
+    good.push(`Lighter wind should help keep the surface cleaner.`);
+  } else if (metrics.windSpeed >= 12) {
+    bad.push(`Stronger wind is likely adding chop on the surface.`);
+  }
 
-    for (let step = 0; step <= segmentSteps; step += 1) {
-      const t = step / segmentSteps;
-      const eased = (1 - Math.cos(Math.PI * t)) / 2;
-      const interpolatedTime = leftTime + segmentDuration * t;
-      const interpolatedValue = left.value + (right.value - left.value) * eased;
-      samples.push(`${xAt(interpolatedTime).toFixed(1)},${yAt(interpolatedValue).toFixed(1)}`);
+  if (metrics.currentSpeed <= 0.5) {
+    good.push(`Currents look fairly manageable right now.`);
+  } else if (metrics.currentSpeed >= 1.2) {
+    bad.push(`Current strength is up, so drift and exits may be tougher.`);
+  }
+
+  if (metrics.clouds <= 35 && metrics.rain <= 0.02) {
+    good.push(`Clearer weather should help light and underwater visibility.`);
+  } else {
+    if (metrics.clouds >= 60) {
+      bad.push(`Cloud cover may flatten the light and make the water look murkier.`);
+    }
+    if (metrics.rain > 0.02) {
+      bad.push(`Rain could reduce visibility and make the surface less pleasant.`);
     }
   }
 
-  const markers = points
+  if (Number.isFinite(metrics.tide)) {
+    if (metrics.tide >= 1 && metrics.tide <= 2.5) {
+      good.push(`Tide level is in a more comfortable middle range for reef depth.`);
+    } else if (metrics.tide < 0) {
+      bad.push(`Lower tide can mean less clearance over shallow reef and rock.`);
+    }
+  }
+
+  if (tideData?.tideSummary) {
+    good.push(`Tide is currently ${tideData.isRising ? "rising" : "falling"}, which helps frame the near-term trend.`);
+  }
+
+  scoreDetails.forEach((detail) => {
+    if (/Protected cove|Offshore or side-offshore winds|Current direction is manageable|Swell direction suits/i.test(detail)) {
+      good.push(detail);
+      return;
+    }
+
+    if (/Very large waves|Moderate waves|Some surf energy|Large swell|Moderate swell|Short swell period|Strong wind chop|Some wind chop|Onshore winds|Cross-shore breeze|Very windy|Breezy|Strong currents|Moderate currents|Noticeable current|Low tide|Heavy cloud cover|Partly cloudy|Rain expected|Light rain possible/i.test(detail)) {
+      bad.push(detail);
+    }
+  });
+
+  return {
+    good: [...new Set(good)].slice(0, 4),
+    bad: [...new Set(bad)].slice(0, 4)
+  };
+}
+
+function buildTideChart(tideData) {
+  const allPoints = (tideData?.predictions || [])
+    .map((point) => ({
+      date: new Date(point.time),
+      value: Number(point.value),
+      type: point.type || null
+    }))
+    .filter((point) => Number.isFinite(point.value) && !Number.isNaN(point.date.getTime()))
+    .sort((left, right) => left.date - right.date);
+  const curveSeries = (tideData?.curvePredictions?.length ? tideData.curvePredictions : tideData?.predictions || [])
+    .map((point) => ({
+      date: new Date(point.time),
+      value: Number(point.value),
+      type: point.type || null
+    }))
+    .filter((point) => Number.isFinite(point.value) && !Number.isNaN(point.date.getTime()))
+    .sort((left, right) => left.date - right.date);
+
+  if (allPoints.length < 2 || curveSeries.length < 2) {
+    return `<div class="tide-fallback">${tideData?.tideSummary || "Tide data unavailable"}</div>`;
+  }
+
+  const dayStart = new Date(curveSeries[0].date);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(curveSeries[0].date);
+  dayEnd.setHours(23, 59, 0, 0);
+  const firstPointTime = curveSeries[0].date.getTime();
+  const lastPointTime = curveSeries[curveSeries.length - 1].date.getTime();
+  const startTime = Math.min(dayStart.getTime(), firstPointTime);
+  const endTime = Math.max(dayEnd.getTime(), lastPointTime);
+  const duration = Math.max(endTime - startTime, 1);
+  const labeledPoints = allPoints.filter((point) => point.type === "H" || point.type === "L");
+  const values = curveSeries.map((point) => point.value);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const valueRange = Math.max(maxValue - minValue, 0.5);
+
+  const xAt = (time) =>
+    TIDE_CHART_PAD_X + ((time - startTime) / duration) * (TIDE_CHART_WIDTH - TIDE_CHART_PAD_X * 2);
+  const yAt = (value) =>
+    TIDE_CHART_HEIGHT -
+    TIDE_CHART_PAD_BOTTOM -
+    ((value - minValue) / valueRange) * (TIDE_CHART_HEIGHT - TIDE_CHART_PAD_TOP - TIDE_CHART_PAD_BOTTOM);
+
+  const samplePoints = [];
+  for (let i = 0; i < curveSeries.length - 1; i += 1) {
+    const left = curveSeries[i];
+    const right = curveSeries[i + 1];
+    const leftTime = left.date.getTime();
+    const rightTime = right.date.getTime();
+    const segmentDuration = Math.max(rightTime - leftTime, 1);
+
+    for (let step = 0; step <= 20; step += 1) {
+      const t = step / 20;
+      const eased = (1 - Math.cos(Math.PI * t)) / 2;
+      const time = leftTime + segmentDuration * t;
+      const value = left.value + (right.value - left.value) * eased;
+      samplePoints.push({
+        x: xAt(time),
+        y: yAt(value)
+      });
+    }
+  }
+
+  let nowMarker = null;
+  const nowTime = Date.now();
+  if (nowTime > startTime && nowTime < endTime) {
+    for (let i = 0; i < curveSeries.length - 1; i += 1) {
+      const left = curveSeries[i];
+      const right = curveSeries[i + 1];
+      const leftTime = left.date.getTime();
+      const rightTime = right.date.getTime();
+      if (nowTime >= leftTime && nowTime <= rightTime) {
+        const t = (nowTime - leftTime) / Math.max(rightTime - leftTime, 1);
+        const eased = (1 - Math.cos(Math.PI * t)) / 2;
+        nowMarker = {
+          x: xAt(nowTime),
+          y: yAt(left.value + (right.value - left.value) * eased)
+        };
+        break;
+      }
+    }
+  }
+
+  function buildBubbleBox(x, y, width, height, side, gap = 10) {
+    const left = clamp(x - width / 2, 6, TIDE_CHART_WIDTH - width - 6);
+    const top =
+      side === "top"
+        ? clamp(y - height - gap, 6, TIDE_CHART_HEIGHT - height - 6)
+        : clamp(y + gap, 6, TIDE_CHART_HEIGHT - height - 6);
+
+    return {
+      left,
+      top,
+      right: left + width,
+      bottom: top + height
+    };
+  }
+
+  const hoverMarkers = labeledPoints
     .map((point) => {
       const x = xAt(point.date.getTime());
       const y = yAt(point.value);
-      const anchor = point.type === "H" ? "start" : "end";
-      const dx = point.type === "H" ? 8 : -8;
-      const dy = point.type === "H" ? -10 : 16;
-      const valueLabel = `${point.value.toFixed(1)} ft`;
-      const timeLabel = formatClock(point.time);
+      const valueText = `${point.value.toFixed(1)} ft`;
+      const timeText = formatClock(point.date);
+      const width = Math.max(estimateLabelWidth(valueText, 7, 16), estimateLabelWidth(timeText, 6, 16));
+      const height = 34;
+      const isHigh = point.type === "H";
+      const pointClass = isHigh ? "tide-point-high" : "tide-point-low";
+      const bubbleClass = isHigh ? "tide-label-box tide-label-box-high" : "tide-label-box tide-label-box-low";
+      const valueClass = isHigh ? "tide-label-value tide-label-value-high" : "tide-label-value tide-label-value-low";
+      const timeClass = isHigh ? "tide-label-time tide-label-time-high" : "tide-label-time tide-label-time-low";
+      const box = buildBubbleBox(x, y, width, height, isHigh ? "top" : "bottom");
 
       return `
-        <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" class="tide-point tide-point-${point.type === "H" ? "high" : "low"}"></circle>
-        <text x="${(x + dx).toFixed(1)}" y="${(y + dy).toFixed(1)}" text-anchor="${anchor}" class="tide-label-value">${valueLabel}</text>
-        <text x="${(x + dx).toFixed(1)}" y="${(y + dy + 12).toFixed(1)}" text-anchor="${anchor}" class="tide-label-time">${timeLabel}</text>
+        <g class="tide-marker-group" tabindex="0" aria-label="${isHigh ? "High tide" : "Low tide"} ${valueText} at ${timeText}">
+          <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" class="tide-hit-area"></circle>
+          <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.4" class="tide-point ${pointClass}"></circle>
+          <g class="tide-hover-bubble">
+            <rect x="${box.left.toFixed(1)}" y="${box.top.toFixed(1)}" width="${width.toFixed(1)}" height="${height}" rx="10" class="${bubbleClass}"></rect>
+            <text x="${(box.left + width / 2).toFixed(1)}" y="${(box.top + 14).toFixed(1)}" text-anchor="middle" class="${valueClass}">${valueText}</text>
+            <text x="${(box.left + width / 2).toFixed(1)}" y="${(box.top + 26).toFixed(1)}" text-anchor="middle" class="${timeClass}">${timeText}</text>
+          </g>
+        </g>
       `;
     })
     .join("");
 
+  const nowMarkup = nowMarker
+    ? (() => {
+        const boxWidth = 52;
+        const boxHeight = 20;
+        const side = nowMarker.y > TIDE_CHART_HEIGHT * 0.56 ? "top" : "bottom";
+        const box = buildBubbleBox(nowMarker.x, nowMarker.y, boxWidth, boxHeight, side, 10);
+        return `
+          <g class="tide-now-group">
+            <circle cx="${nowMarker.x.toFixed(1)}" cy="${nowMarker.y.toFixed(1)}" r="5.2" class="tide-point tide-point-now"></circle>
+            <rect x="${box.left.toFixed(1)}" y="${box.top.toFixed(1)}" width="${boxWidth}" height="${boxHeight}" rx="10" class="tide-now-badge"></rect>
+            <text x="${(box.left + boxWidth / 2).toFixed(1)}" y="${(box.top + 13).toFixed(1)}" text-anchor="middle" class="tide-now-text">Now</text>
+          </g>
+        `;
+      })()
+    : "";
+
+  const curvePath = samplePoints.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" L ");
+
   return `
     <div class="tide-chart-card">
       <div class="tide-chart-heading">
-        <span>🌙 Tide</span>
+        <span><img src="${ICONS.tide}" alt="" class="chip-icon chip-icon-inline">Tide</span>
         <span>${tideData?.isRising ? "Rising" : "Falling"}</span>
       </div>
-      <svg class="tide-chart" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-label="Daily tide chart">
-        <path d="M ${samples.join(" L ")}" class="tide-curve"></path>
-        ${markers}
+      <svg class="tide-chart" viewBox="0 0 ${TIDE_CHART_WIDTH} ${TIDE_CHART_HEIGHT}" preserveAspectRatio="none" aria-label="Daily tide chart">
+        <path d="M ${curvePath}" class="tide-curve"></path>
+        ${hoverMarkers}
+        ${nowMarkup}
       </svg>
     </div>
   `;
 }
 
 function buildSpotCard(result) {
-  const { region, score, bestTime, bestScore, metrics, tideData } = result;
+  const { region, score, bestTime, bestScore, metrics, tideData, conditionBreakdown } = result;
   const scoreColor = getScoreColor(score);
+  const bestScoreColor = getScoreColor(bestScore);
   const protectedBadge = region.protected ? '<span class="protected-badge">Protected</span>' : "";
   const chips = buildConditionChips(metrics, tideData, bestTime, bestScore);
+  const goodList = (conditionBreakdown?.good?.length
+    ? conditionBreakdown.good
+    : ["A few signals are neutral right now, so this spot is not getting major help from the conditions."])
+    .map((item) => `<li>${item}</li>`)
+    .join("");
+  const badList = (conditionBreakdown?.bad?.length
+    ? conditionBreakdown.bad
+    : ["There are no major red flags standing out for this sub-region at the moment."])
+    .map((item) => `<li>${item}</li>`)
+    .join("");
 
   return `
-    <article class="spot-card">
-      <div class="spot-card-top">
-        <div>
-          <div class="spot-card-heading">
-            <h3>${region.title}</h3>
-            ${protectedBadge}
+    <article class="spot-card" tabindex="0" role="button" aria-pressed="false" aria-label="Flip ${region.title} conditions card">
+      <div class="spot-card-inner">
+        <div class="spot-card-face spot-card-front">
+          <div class="spot-card-top">
+            <div>
+              <div class="spot-card-heading">
+                <h3>${region.title}</h3>
+                ${protectedBadge}
+              </div>
+              <div class="region-towns">${region.towns}</div>
+            </div>
+            <div class="spot-score-pill" style="color:${scoreColor}; border-color:${scoreColor};">${score}/10</div>
           </div>
-          <div class="region-towns">${region.towns}</div>
+          <div class="best-window-banner">
+            <div class="best-window-banner-head">
+              <span><img src="${ICONS.bestWindow}" alt="" class="chip-icon"></span>
+              <strong>Next best time</strong>
+            </div>
+            <em>${bestTime} · <span style="color:${bestScoreColor};">${bestScore}/10</span></em>
+          </div>
+          <div class="condition-chip-row">
+            ${chips
+              .map(
+                (chip) => `
+                  <div class="condition-chip">
+                    <div class="condition-chip-head">
+                      <span><img src="${chip.icon}" alt="" class="chip-icon"></span>
+                      <strong>${chip.label}</strong>
+                    </div>
+                    <em>${chip.value}</em>
+                  </div>
+                `
+              )
+              .join("")}
+          </div>
+          ${buildTideChart(tideData)}
+          <div class="spot-card-hint">Tap for what is helping and hurting conditions</div>
         </div>
-        <div class="spot-score-pill" style="color:${scoreColor}; border-color:${scoreColor};">${score}/10</div>
+        <div class="spot-card-face spot-card-back">
+          <div class="spot-card-back-top">
+            <div>
+              <div class="spot-card-heading">
+                <h3>${region.title}</h3>
+                ${protectedBadge}
+              </div>
+              <div class="region-towns">${region.towns}</div>
+            </div>
+            <div class="spot-score-pill" style="color:${scoreColor}; border-color:${scoreColor};">${score}/10</div>
+          </div>
+          <div class="condition-breakdown">
+            <section class="condition-breakdown-panel condition-breakdown-good">
+              <h4>What is making snorkeling conditions good</h4>
+              <ul>${goodList}</ul>
+            </section>
+            <section class="condition-breakdown-panel condition-breakdown-bad">
+              <h4>What is making snorkeling conditions bad</h4>
+              <ul>${badList}</ul>
+            </section>
+          </div>
+          <div class="spot-card-hint">Tap again to go back to the emoji and tide view</div>
+        </div>
       </div>
-      <div class="condition-chip-row">
-        ${chips.map((chip) => `<div class="condition-chip"><span>${chip.emoji}</span><strong>${chip.label}</strong><em>${chip.value}</em></div>`).join("")}
-      </div>
-      ${buildTideChart(tideData)}
     </article>
   `;
 }
 
 function buildShoreSection(shoreName, shoreResults) {
-  const average = Math.round((shoreResults.reduce((sum, result) => sum + result.score, 0) / shoreResults.length) * 10) / 10;
+  const average =
+    Math.round((shoreResults.reduce((sum, result) => sum + result.score, 0) / shoreResults.length) * 10) / 10;
   const color = getScoreColor(average);
   const bestNow = [...shoreResults].sort((a, b) => b.score - a.score)[0];
+  const gridClass = shoreResults.length >= 3 ? "snorkel-group-grid grid-three" : "snorkel-group-grid grid-two";
 
   return `
     <details class="shore-section">
       <summary class="shore-summary">
-        <div class="shore-arrow" aria-hidden="true"></div>
-        <div class="shore-summary-title">
-          <p>${shoreName} Shore</p>
-          <h3>${average}/10</h3>
-          <span>${bestNow ? `Best now: ${bestNow.region.title}` : `${shoreResults.length} spots`}</span>
+        <div class="shore-summary-main">
+          <div class="shore-summary-title">
+            <p>${shoreName} Shore</p>
+            <h3 style="color:${color};">${average}/10</h3>
+            <span>${bestNow ? `Best now: ${bestNow.region.title}` : `${shoreResults.length} spots`}</span>
+          </div>
+          <div class="shore-arrow" aria-hidden="true"></div>
         </div>
       </summary>
       <div class="shore-details">
@@ -223,7 +568,7 @@ function buildShoreSection(shoreName, shoreResults) {
           </div>
           <div class="shore-expanded-meta">${shoreResults.length} spots · tap arrow to collapse</div>
         </div>
-        <div class="snorkel-group-grid">
+        <div class="${gridClass}">
           ${shoreResults.map((result) => buildSpotCard(result)).join("")}
         </div>
       </div>
@@ -231,7 +576,114 @@ function buildShoreSection(shoreName, shoreResults) {
   `;
 }
 
-function initializeReport() {
+function buildFallbackResult(region) {
+  return {
+    region,
+    score: 0,
+    bestTime: "N/A",
+    bestScore: 0,
+    metrics: getSafeMetrics(null),
+    tideData: { tideSummary: null, isRising: false, predictions: [], currentLevel: null },
+    conditionBreakdown: { good: [], bad: [] }
+  };
+}
+
+async function loadRegionResult(region) {
+  try {
+    const [forecast, tideData] = await Promise.all([
+      fetchForecast(region, { forecastHours: 24 }),
+      fetchTide(region.stationId)
+    ]);
+    const safeMetrics = getSafeMetrics(forecast.current);
+    const scoreResult = calculateRegionalScore(safeMetrics, region, { includeDetails: true });
+    const best = findBestDisplayTime(forecast.hourly || [], region);
+
+    return {
+      region,
+      score: scoreResult.score,
+      bestTime: best.time,
+      bestScore: best.score,
+      metrics: safeMetrics,
+      tideData,
+      conditionBreakdown: buildConditionBreakdown(safeMetrics, region, tideData, scoreResult.details)
+    };
+  } catch (error) {
+    console.error(`Error loading region ${region.title}:`, error);
+    return buildFallbackResult(region);
+  }
+}
+
+function renderIslandSummary(results) {
+  const islandSummary = document.getElementById("island-summary");
+  if (!islandSummary) return;
+
+  const average =
+    Math.round((results.reduce((sum, result) => sum + result.score, 0) / Math.max(results.length, 1)) * 10) / 10;
+  const color = getScoreColor(average);
+
+  islandSummary.innerHTML = `
+    <div class="island-header island-header-minimal">
+      <h3>Island-Wide</h3>
+      <div class="snorkel-score" style="color:${color};">${average}/10</div>
+    </div>
+  `;
+  islandSummary.style.display = "block";
+}
+
+function renderShoreSections(results) {
+  const container = document.getElementById("snorkel-container");
+  if (!container) return;
+
+  const loadingEl = document.getElementById("loading");
+  if (loadingEl) {
+    loadingEl.remove();
+  }
+
+  const groupedResults = SHORE_ORDER.map((shore) => ({
+    shore,
+    results: results.filter((result) => result.region.shore === shore)
+  })).filter((group) => group.results.length > 0);
+
+  container.innerHTML = groupedResults.map((group) => buildShoreSection(group.shore, group.results)).join("");
+  initializeSpotCardFlips(container);
+}
+
+function initializeSpotCardFlips(container) {
+  const spotCards = container.querySelectorAll(".spot-card");
+
+  const toggleCard = (card) => {
+    const isFlipped = card.classList.toggle("is-flipped");
+    card.setAttribute("aria-pressed", String(isFlipped));
+  };
+
+  spotCards.forEach((card) => {
+    card.addEventListener("click", (event) => {
+      if (event.target.closest(".tide-marker-group")) {
+        return;
+      }
+
+      toggleCard(card);
+    });
+
+    card.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      event.preventDefault();
+      toggleCard(card);
+    });
+  });
+}
+
+function renderError(error) {
+  console.error("Error loading report:", error);
+  const container = document.getElementById("snorkel-container");
+  if (!container) return;
+  container.innerHTML = '<p class="error-message" style="display:block;">Error loading snorkel report. Please try again later.</p>';
+}
+
+async function initializeReport() {
   const reportDateEl = document.getElementById("report-date");
   if (reportDateEl) {
     reportDateEl.textContent = new Date().toLocaleDateString("en-US", {
@@ -241,78 +693,18 @@ function initializeReport() {
     });
   }
 
-  Promise.all(
-    REGIONS.map(async (region) => {
-      try {
-        const [forecast, tideData] = await Promise.all([
-          fetchForecast(region, { forecastHours: 24 }),
-          fetchTide(region.stationId)
-        ]);
-        const safeMetrics = getSafeMetrics(forecast.current);
-        const scoreResult = calculateRegionalScore(safeMetrics, region, { includeDetails: true });
-        const best = findBestSnorkelTime(forecast.hourly || [], region);
+  try {
+    const results = await Promise.all(REGIONS.map((region) => loadRegionResult(region)));
 
-        return {
-          region,
-          score: scoreResult.score,
-          bestTime: best.time,
-          bestScore: best.score,
-          metrics: safeMetrics,
-          tideData
-        };
-      } catch (error) {
-        console.error(`Error loading region ${region.title}:`, error);
-        return {
-          region,
-          score: 0,
-          bestTime: "N/A",
-          bestScore: 0,
-          metrics: getSafeMetrics(null),
-          tideData: { tideSummary: null, isRising: false, predictions: [], currentLevel: null }
-        };
-      }
-    })
-  )
-    .then((results) => {
-      if (!results.length) {
-        throw new Error("No snorkel results were available.");
-      }
+    if (!results.length) {
+      throw new Error("No snorkel results were available.");
+    }
 
-      const allScores = results.map((result) => result.score);
-      const average = Math.round((allScores.reduce((sum, value) => sum + value, 0) / allScores.length) * 10) / 10;
-      const color = getScoreColor(average);
-
-      const islandSummary = document.getElementById("island-summary");
-      if (islandSummary) {
-        islandSummary.innerHTML = `
-          <div class="island-header island-header-minimal">
-            <h3>Island-Wide</h3>
-            <div class="snorkel-score" style="color:${color};">${average}/10</div>
-          </div>
-        `;
-        islandSummary.style.display = "block";
-      }
-
-      const container = document.getElementById("snorkel-container");
-      if (!container) return;
-
-      const loadingEl = document.getElementById("loading");
-      if (loadingEl) loadingEl.remove();
-
-      const groupedResults = SHORE_ORDER.map((shore) => ({
-        shore,
-        results: results.filter((result) => result.region.shore === shore)
-      })).filter((group) => group.results.length > 0);
-
-      container.innerHTML = groupedResults.map((group) => buildShoreSection(group.shore, group.results)).join("");
-    })
-    .catch((error) => {
-      console.error("Error loading report:", error);
-      const container = document.getElementById("snorkel-container");
-      if (container) {
-        container.innerHTML = '<p class="error-message" style="display:block;">Error loading snorkel report. Please try again later.</p>';
-      }
-    });
+    renderIslandSummary(results);
+    renderShoreSections(results);
+  } catch (error) {
+    renderError(error);
+  }
 }
 
 if (document.readyState === "loading") {
