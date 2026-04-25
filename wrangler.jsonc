@@ -5,5 +5,12 @@
   "main": "worker.js",
   "assets": {
     "directory": "."
-  }
+  },
+  "d1_databases": [
+    {
+      "binding": "FEEDBACK_DB",
+      "database_name": "snorkel-feedback",
+      "database_id": "f34e655e-2ada-4b29-9928-48f186c899d6"
+    }
+  ]
 }
