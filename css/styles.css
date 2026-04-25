@@ -15,15 +15,15 @@ body {
 nav {
   background-color: #d6f4f1;
   padding: 16px 20px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  justify-content: stretch;
+  display: flex;
+  justify-content: center;
   align-items: center;
   gap: 18px;
   border-bottom: 2px solid #b8ead7;
   position: sticky;
   top: 0;
   z-index: 100;
+  flex-wrap: wrap;
 }
 
 nav a {
@@ -34,6 +34,7 @@ nav a {
   padding: 8px 16px;
   border-radius: 6px;
   transition: background-color 0.3s ease;
+  white-space: nowrap;
 }
 
 nav a:hover {
@@ -75,12 +76,12 @@ nav a.active {
   justify-content: center;
   align-items: center;
   gap: 18px;
-  min-width: 0;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
 .nav-spacer {
-  width: 42px;
-  height: 42px;
+  display: none;
 }
 
 .nav-more-menu {
@@ -1824,8 +1825,10 @@ footer {
   }
 
   nav {
-    grid-template-columns: auto 1fr;
-    gap: 15px;
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center !important;
+    gap: 12px;
     padding: 12px 16px;
   }
 
@@ -1835,9 +1838,10 @@ footer {
   }
 
   .nav-center-links {
-    justify-content: flex-start;
+    justify-content: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
+    max-width: 100%;
   }
 
   .nav-spacer {
