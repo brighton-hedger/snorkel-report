@@ -956,6 +956,230 @@ footer {
   display: none;
 }
 
+/* ==================== FEEDBACK PAGE ==================== */
+.feedback-header {
+  max-width: 860px;
+  margin: 0 auto 20px;
+  text-align: center;
+}
+
+.feedback-header h1 {
+  margin: 0;
+  font-size: 34px;
+  color: #000000;
+}
+
+.feedback-header p {
+  margin: 8px 0 0;
+  color: #55706e;
+  font-size: 18px;
+}
+
+.feedback-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.feedback-card {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(42, 161, 152, 0.14);
+  border-radius: 22px;
+  box-shadow: 0 14px 36px rgba(34, 78, 92, 0.08);
+  padding: 20px;
+}
+
+.feedback-form {
+  display: grid;
+  gap: 18px;
+}
+
+.feedback-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.feedback-field {
+  display: grid;
+  gap: 8px;
+}
+
+.feedback-field span {
+  color: #315f5c;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.feedback-field input,
+.feedback-field select,
+.feedback-field textarea {
+  width: 100%;
+  border: 1px solid rgba(42, 161, 152, 0.18);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+  color: #21413f;
+  background: #f9fffe;
+  box-sizing: border-box;
+}
+
+.feedback-field textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.feedback-primary-button,
+.feedback-secondary-button {
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feedback-primary-button {
+  background: #2aa198;
+  color: #ffffff;
+}
+
+.feedback-secondary-button {
+  background: #e7f5f4;
+  color: #376d69;
+}
+
+.feedback-primary-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.feedback-status {
+  margin: 0;
+  min-height: 20px;
+  color: #4a6563;
+  font-size: 14px;
+}
+
+.feedback-status-success {
+  color: #1e8b4d;
+}
+
+.feedback-status-error {
+  color: #ba3c1a;
+}
+
+.feedback-snapshot-head h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #2aa198;
+}
+
+.feedback-snapshot-head p {
+  margin: 6px 0 0;
+  color: #6b817f;
+}
+
+.feedback-snapshot-empty,
+.feedback-snapshot {
+  margin-top: 18px;
+}
+
+.feedback-snapshot-empty {
+  color: #64807d;
+  background: #f4fbfa;
+  border: 1px dashed rgba(42, 161, 152, 0.22);
+  border-radius: 18px;
+  padding: 20px;
+}
+
+.feedback-snapshot-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.feedback-snapshot-summary h3 {
+  margin: 0;
+  color: #1f6f6a;
+  font-size: 26px;
+}
+
+.feedback-snapshot-summary p {
+  margin: 6px 0 0;
+  color: #6c8481;
+}
+
+.feedback-snapshot-score {
+  padding: 10px 16px;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  font-size: 28px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.feedback-metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.feedback-metric {
+  background: #f4fbfa;
+  border: 1px solid rgba(42, 161, 152, 0.12);
+  border-radius: 16px;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.feedback-metric strong {
+  color: #5c7c79;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.feedback-metric span {
+  color: #234846;
+  font-size: 18px;
+}
+
+.feedback-detail-list {
+  margin-top: 16px;
+  background: #f8fcfc;
+  border: 1px solid rgba(42, 161, 152, 0.12);
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.feedback-detail-list strong {
+  color: #456b68;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.feedback-detail-list ul {
+  margin: 10px 0 0 18px;
+  padding: 0;
+  color: #284d4a;
+}
+
+.feedback-detail-list li + li {
+  margin-top: 6px;
+}
+
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .header-centered {
@@ -1040,6 +1264,16 @@ footer {
 
   .region-day-chart-grid {
     grid-template-columns: 1fr;
+  }
+
+  .feedback-layout,
+  .feedback-grid,
+  .feedback-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-actions {
+    flex-direction: column;
   }
 }
 

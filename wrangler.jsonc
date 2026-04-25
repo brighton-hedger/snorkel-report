@@ -2,6 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "snorkel-report",
   "compatibility_date": "2026-04-24",
+  "main": "worker.js",
   "assets": {
     "directory": "."
   }
