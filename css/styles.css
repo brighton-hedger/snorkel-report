@@ -85,9 +85,22 @@ nav a.active {
 }
 
 .title-block {
-  text-align: center;
+  text-align: left;
   flex: 1;
   min-width: 200px;
+}
+
+.title-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+}
+
+.title-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .title-block h1 {
@@ -95,6 +108,12 @@ nav a.active {
   margin: 0;
   font-weight: 700;
   color: #000;
+}
+
+.title-logo {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 auto;
 }
 
 .title-block h2 {
@@ -121,6 +140,7 @@ nav a.active {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 18px;
   margin-bottom: 8px;
 }
 
@@ -132,6 +152,10 @@ nav a.active {
 
 .island-header-minimal {
   margin-bottom: 0;
+}
+
+.island-header-minimal .snorkel-score {
+  margin-left: 10px;
 }
 
 .snorkel-wrapper {
@@ -232,24 +256,10 @@ nav a.active {
 
 .shore-expanded-header {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: flex-end;
   gap: 10px;
   padding: 0 2px 12px;
-}
-
-.shore-expanded-header p {
-  margin: 0 0 4px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: #668683;
-}
-
-.shore-expanded-header h3 {
-  margin: 0;
-  font-size: 22px;
-  color: #1f5954;
 }
 
 .shore-expanded-meta {
@@ -715,155 +725,133 @@ nav a.active {
   margin-top: 4px;
 }
 
-.day-forecast-controls {
+.day-region-groups,
+.weekly-groups {
+  display: grid;
+  gap: 24px;
+  max-width: 1280px;
+  margin: 20px auto 0;
+}
+
+.region-forecast-group {
+  display: grid;
+  gap: 14px;
+}
+
+.region-day-card-list {
+  display: grid;
+  gap: 18px;
+}
+
+.region-day-card,
+.weekly-table-shell {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(42, 161, 152, 0.15);
+  border-radius: 22px;
+  box-shadow: 0 14px 36px rgba(34, 78, 92, 0.08);
+}
+
+.region-subregion-dropdown {
+  overflow: hidden;
+}
+
+.weekly-table-shell {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.region-day-card-head {
+  list-style: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin: 0 auto 16px;
-  max-width: 1200px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid rgba(42, 161, 152, 0.18);
-  border-radius: 16px;
-  padding: 10px 12px;
-  backdrop-filter: blur(8px);
-}
-
-.day-tabs {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex: 1;
-  flex-wrap: wrap;
-}
-
-.day-tab {
-  border: 1px solid rgba(42, 161, 152, 0.22);
-  background: #ffffff;
-  color: #2f4f4f;
-  border-radius: 999px;
-  padding: 10px 16px;
-  font: inherit;
-  font-weight: 700;
+  gap: 16px;
+  padding: 18px 18px 14px;
   cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.day-tab:hover,
-.day-tab:focus-visible {
-  background: #ecfbf8;
-  outline: none;
-  transform: translateY(-1px);
+.region-day-card-head::-webkit-details-marker {
+  display: none;
 }
 
-.day-tab.active {
-  background: #2aa198;
-  color: #ffffff;
-  box-shadow: 0 10px 24px rgba(42, 161, 152, 0.18);
-}
-
-.day-nav-button {
-  border: none;
-  background: #2aa198;
-  color: #ffffff;
-  border-radius: 999px;
-  padding: 10px 16px;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
-}
-
-.day-nav-button:hover,
-.day-nav-button:focus-visible {
-  background: #23867f;
-  outline: none;
-  transform: translateY(-1px);
-}
-
-.day-nav-button:disabled {
-  opacity: 0.45;
-  cursor: default;
-  transform: none;
-}
-
-.scroll-wrapper {
-  overflow-x: auto;
-  width: 100%;
-  margin: 20px 0;
-  display: flex;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: #2aa198 rgba(42, 161, 152, 0.12);
-}
-
-.scroll-wrapper::-webkit-scrollbar {
-  height: 12px;
-}
-
-.scroll-wrapper::-webkit-scrollbar-track {
-  background: rgba(42, 161, 152, 0.12);
-  border-radius: 999px;
-}
-
-.scroll-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(42, 161, 152, 0.65);
-  border-radius: 999px;
-}
-
-.day-section {
-  flex: 0 0 100%;
-  width: 100%;
-  padding: 10px;
-  box-sizing: border-box;
-  scroll-snap-align: start;
-}
-
-.day-section h2 {
-  text-align: center;
-  color: #555;
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 20px 0;
-}
-
-.chart-wrapper {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 15px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.chart-container {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.chart-container h3 {
+.region-day-card-head h3 {
   color: #2aa198;
+  font-size: 24px;
+  margin: 0;
+}
+
+.region-day-card-head p {
+  margin: 6px 0 0;
+  color: #6d8180;
+  font-size: 17px;
+}
+
+.forecast-summary-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.forecast-summary-label {
+  color: #54708e;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.region-subregion-dropdown .shore-arrow {
+  align-self: center;
+}
+
+.region-subregion-dropdown[open] .shore-arrow::before {
+  transform: rotate(-135deg) translate(-1px, -1px);
+}
+
+.region-day-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 0 18px 18px;
+}
+
+.region-day-chart-panel {
+  background: #f4fbfa;
+  border: 1px solid rgba(42, 161, 152, 0.12);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.region-day-chart-label {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.region-day-chart-label strong {
+  color: #315f5c;
   font-size: 16px;
-  margin: 0 0 10px 0;
+}
+
+.region-day-chart-label span {
+  color: #728887;
+  font-size: 13px;
+}
+
+.chart-empty-state {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
   text-align: center;
+  color: #68817f;
+  font-size: 14px;
 }
 
 canvas {
   max-width: 100%;
   height: auto;
-}
-
-@media (max-width: 600px) {
-  .chart-wrapper {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ==================== WEEK FORECAST PAGE ==================== */
@@ -898,9 +886,8 @@ canvas {
   border-collapse: collapse;
   text-align: center;
   background: white;
-  border-radius: 12px;
+  border-radius: 22px;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .weekly-table th,
@@ -917,6 +904,14 @@ canvas {
   color: #2aa198;
   font-size: 25px;
   border-bottom: 2px solid rgba(42, 161, 152, 0.18);
+}
+
+.weekly-table th span {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #658886;
 }
 
 .weekly-table td.region {
@@ -971,6 +966,11 @@ footer {
     font-size: 24px;
   }
 
+  .title-logo {
+    width: 60px;
+    height: 60px;
+  }
+
   .title-block h2 {
     font-size: 14px;
   }
@@ -994,8 +994,7 @@ footer {
   }
 
   .shore-expanded-header {
-    flex-direction: column;
-    align-items: flex-start;
+    justify-content: flex-start;
   }
 
   .spot-card-top {
@@ -1031,14 +1030,16 @@ footer {
     font-size: 24px;
   }
 
-  .day-forecast-controls {
-    flex-wrap: wrap;
-    justify-content: center;
+  .region-forecast-group-head h2 {
+    font-size: 22px;
   }
 
-  .day-tabs {
-    order: -1;
-    width: 100%;
+  .region-day-card-head h3 {
+    font-size: 21px;
+  }
+
+  .region-day-chart-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1062,13 +1063,31 @@ footer {
     font-size: 13px;
   }
 
-  .day-tab,
-  .day-nav-button {
-    width: 100%;
-    text-align: center;
+  .weekly-table {
+    width: max-content;
+    min-width: 100%;
   }
 
-  .day-nav-button {
-    flex: 1 1 140px;
+  .weekly-table th,
+  .weekly-table td {
+    min-width: 72px;
+  }
+
+  .weekly-table th:first-child,
+  .weekly-table td.region {
+    min-width: 116px;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #ffffff;
+  }
+
+  .weekly-table th:first-child {
+    z-index: 2;
+    background: #d6f4f1;
+  }
+
+  .weekly-table th span {
+    font-size: 12px;
   }
 }

@@ -1,4 +1,3 @@
-// ==================== ENHANCED DAY FORECAST SCRIPT ====================
 const {
   REGIONS,
   getDateKey,
@@ -7,183 +6,193 @@ const {
 } = window.SnorkelShared;
 
 const DAY_FORECAST_DAYS = 3;
+const SHORE_ORDER = ["East", "South", "North", "West"];
 
-async function fetchSnorkelData(region, dayOffset = 0) {
-  const forecast = await fetchForecast(region, { forecastDays: DAY_FORECAST_DAYS });
-  const targetDate = new Date();
-  targetDate.setHours(0, 0, 0, 0);
-  targetDate.setDate(targetDate.getDate() + dayOffset);
-  const targetDateKey = getDateKey(targetDate);
-
-  return getDaylightScoreSeries(forecast.hourly, region, targetDateKey).map((entry) => ({
-    time: new Date(entry.time).toLocaleTimeString([], { hour: "numeric", hour12: true }),
-    score: entry.score
-  }));
+function buildDayDescriptors() {
+  return [...Array(DAY_FORECAST_DAYS)].map((_, index) => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    date.setDate(date.getDate() + index);
+    return {
+      index,
+      dateKey: getDateKey(date),
+      shortLabel: date.toLocaleDateString("en-US", { weekday: "short" }),
+      fullLabel: date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
+    };
+  });
 }
 
-async function drawDaySection(dayOffset) {
-  const container = document.getElementById("scroll-days");
-  if (!container) return;
+function toCanvasId(regionTitle, dayIndex) {
+  return `chart-${regionTitle.replace(/[^a-z0-9]+/gi, "")}-d${dayIndex}`;
+}
 
-  const section = document.createElement("div");
-  section.className = "day-section";
-  const date = new Date();
-  date.setDate(date.getDate() + dayOffset);
-  const dateStr = date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
-  section.innerHTML = `<h2>${dateStr}</h2><div class="chart-wrapper" id="charts-day${dayOffset}"></div>`;
-  container.appendChild(section);
+function buildRegionGroups() {
+  return SHORE_ORDER.map((shore) => ({
+    shore,
+    regions: REGIONS.filter((region) => region.shore === shore)
+  })).filter((group) => group.regions.length);
+}
 
-  for (const region of REGIONS) {
-    const data = await fetchSnorkelData(region, dayOffset);
-    const chartSection = document.createElement("div");
-    chartSection.className = "chart-container";
-    const canvasId = `chart-${region.title.replace(/\s/g, "")}-d${dayOffset}`;
-    chartSection.innerHTML = `<h3>${region.title}</h3><canvas id="${canvasId}" width="500" height="400"></canvas>`;
-    section.querySelector(".chart-wrapper").appendChild(chartSection);
+async function fetchRegionForecast(region) {
+  try {
+    const forecast = await fetchForecast(region, { forecastDays: DAY_FORECAST_DAYS });
+    const days = buildDayDescriptors().map((day) => ({
+      ...day,
+      points: getDaylightScoreSeries(forecast.hourly, region, day.dateKey).map((entry) => ({
+        time: new Date(entry.time).toLocaleTimeString([], { hour: "numeric", hour12: true }),
+        score: entry.score
+      }))
+    }));
 
-    new Chart(document.getElementById(canvasId), {
-      type: "line",
-      data: {
-        labels: data.map((point) => point.time),
-        datasets: [
-          {
-            label: region.title,
-            data: data.map((point) => point.score),
-            borderColor: "#2aa198",
-            backgroundColor: "rgba(42, 161, 152, 0.2)",
-            fill: true,
-            tension: 0.4,
-            pointRadius: 2
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: true,
-        aspectRatio: 1.25,
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 10,
-            ticks: { font: { size: 15 } },
-            title: { display: true, text: "Score" }
-          },
-          x: {
-            ticks: {
-              maxTicksLimit: 12,
-              callback(value, index) {
-                return index % 3 === 0 ? this.getLabelForValue(value) : "";
-              },
-              font: { size: 15 }
-            }
-          }
-        },
-        plugins: { legend: { display: false } }
-      }
-    });
+    return {
+      region,
+      days
+    };
+  } catch (error) {
+    console.error(`Error fetching day forecast for ${region.title}:`, error);
+    return {
+      region,
+      days: buildDayDescriptors().map((day) => ({
+        ...day,
+        points: []
+      }))
+    };
   }
 }
 
-function getDaySections() {
-  return Array.from(document.querySelectorAll(".day-section"));
-}
+function renderDayChart(canvasId, regionTitle, dayLabel, points) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || typeof Chart === "undefined") {
+    return;
+  }
 
-function setActiveDay(dayIndex) {
-  const tabs = Array.from(document.querySelectorAll(".day-tab"));
-  const prevButton = document.getElementById("day-prev");
-  const nextButton = document.getElementById("day-next");
-
-  tabs.forEach((tab, index) => {
-    const isActive = index === dayIndex;
-    tab.classList.toggle("active", isActive);
-    tab.setAttribute("aria-selected", String(isActive));
-    tab.tabIndex = isActive ? 0 : -1;
-  });
-
-  if (prevButton) prevButton.disabled = dayIndex <= 0;
-  if (nextButton) nextButton.disabled = dayIndex >= tabs.length - 1;
-}
-
-function scrollToDay(dayIndex) {
-  const sections = getDaySections();
-  const container = document.getElementById("scroll-days");
-  const target = sections[dayIndex];
-  if (!container || !target) return;
-
-  container.scrollTo({
-    left: target.offsetLeft,
-    behavior: "smooth"
-  });
-
-  setActiveDay(dayIndex);
-}
-
-function getCurrentVisibleDayIndex(container, sections) {
-  const scrollCenter = container.scrollLeft + container.clientWidth / 2;
-  let closestIndex = 0;
-  let smallestDistance = Number.POSITIVE_INFINITY;
-
-  sections.forEach((section, index) => {
-    const sectionCenter = section.offsetLeft + section.offsetWidth / 2;
-    const distance = Math.abs(sectionCenter - scrollCenter);
-    if (distance < smallestDistance) {
-      smallestDistance = distance;
-      closestIndex = index;
+  new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: points.map((point) => point.time),
+      datasets: [
+        {
+          label: `${regionTitle} ${dayLabel}`,
+          data: points.map((point) => point.score),
+          borderColor: "#2aa198",
+          backgroundColor: "rgba(42, 161, 152, 0.18)",
+          fill: true,
+          tension: 0.35,
+          pointRadius: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 1.25,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 10,
+          ticks: { font: { size: 13 } },
+          title: { display: true, text: "Score" }
+        },
+        x: {
+          ticks: {
+            maxTicksLimit: 8,
+            callback(value, index) {
+              return index % 2 === 0 ? this.getLabelForValue(value) : "";
+            },
+            font: { size: 12 }
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
     }
   });
-
-  return closestIndex;
 }
 
-function setupDayNavigation() {
-  const container = document.getElementById("scroll-days");
-  const tabsContainer = document.getElementById("day-tabs");
-  const prevButton = document.getElementById("day-prev");
-  const nextButton = document.getElementById("day-next");
-  const sections = getDaySections();
+function buildRegionCardMarkup(regionResult) {
+  return `
+    <details class="region-day-card region-subregion-dropdown">
+      <summary class="region-day-card-head">
+        <div>
+          <h3>${regionResult.region.title}</h3>
+          <p>${regionResult.region.towns}</p>
+        </div>
+        <div class="forecast-summary-actions">
+          <span class="forecast-summary-label">View charts</span>
+          <div class="shore-arrow" aria-hidden="true"></div>
+        </div>
+      </summary>
+      <div class="region-day-chart-grid">
+        ${regionResult.days.map((day) => `
+          <section class="region-day-chart-panel">
+            <div class="region-day-chart-label">
+              <strong>${day.shortLabel}</strong>
+              <span>${day.fullLabel}</span>
+            </div>
+            ${
+              day.points.length
+                ? `<canvas id="${toCanvasId(regionResult.region.title, day.index)}" width="420" height="320"></canvas>`
+                : '<div class="chart-empty-state">No daylight data available.</div>'
+            }
+          </section>
+        `).join("")}
+      </div>
+    </details>
+  `;
+}
 
-  if (!container || !tabsContainer || !prevButton || !nextButton || !sections.length) return;
+function renderGroupedDayForecast(results) {
+  const container = document.getElementById("day-region-groups");
+  if (!container) return;
 
-  tabsContainer.innerHTML = "";
+  const groupedResults = buildRegionGroups().map((group) => ({
+    shore: group.shore,
+    results: group.regions
+      .map((region) => results.find((result) => result.region.title === region.title))
+      .filter(Boolean)
+  }));
 
-  sections.forEach((section, index) => {
-    const label = section.dataset.dayLabel || `Day ${index + 1}`;
-    const tab = document.createElement("button");
-    tab.type = "button";
-    tab.className = "day-tab";
-    tab.id = `day-tab-${index}`;
-    tab.setAttribute("role", "tab");
-    tab.setAttribute("aria-controls", section.id);
-    tab.setAttribute("aria-selected", "false");
-    tab.textContent = label;
-    tab.addEventListener("click", () => scrollToDay(index));
-    tabsContainer.appendChild(tab);
-  });
+  container.innerHTML = groupedResults.map((group) => `
+    <details class="shore-section region-forecast-group">
+      <summary class="shore-summary">
+        <div class="shore-summary-main">
+          <div class="shore-summary-title">
+            <p>${group.shore} Shore</p>
+          </div>
+          <div class="forecast-summary-actions">
+            <span class="forecast-summary-label">View charts</span>
+            <div class="shore-arrow" aria-hidden="true"></div>
+          </div>
+        </div>
+      </summary>
+      <div class="shore-details">
+        <div class="region-day-card-list">
+          ${group.results.map((result) => buildRegionCardMarkup(result)).join("")}
+        </div>
+      </div>
+    </details>
+  `).join("");
 
-  prevButton.addEventListener("click", () => {
-    const currentIndex = getCurrentVisibleDayIndex(container, sections);
-    scrollToDay(Math.max(0, currentIndex - 1));
-  });
+  groupedResults.forEach((group) => {
+    group.results.forEach((result) => {
+      result.days.forEach((day) => {
+        if (!day.points.length) {
+          return;
+        }
 
-  nextButton.addEventListener("click", () => {
-    const currentIndex = getCurrentVisibleDayIndex(container, sections);
-    scrollToDay(Math.min(sections.length - 1, currentIndex + 1));
-  });
-
-  let ticking = false;
-  container.addEventListener("scroll", () => {
-    if (ticking) return;
-    ticking = true;
-    window.requestAnimationFrame(() => {
-      setActiveDay(getCurrentVisibleDayIndex(container, sections));
-      ticking = false;
+        renderDayChart(
+          toCanvasId(result.region.title, day.index),
+          result.region.title,
+          day.shortLabel,
+          day.points
+        );
+      });
     });
   });
-
-  setActiveDay(0);
 }
 
-function initializeDayForecast() {
+async function initializeDayForecast() {
   const forecastDateEl = document.getElementById("forecast-date");
   if (forecastDateEl) {
     forecastDateEl.textContent = new Date().toLocaleDateString("en-US", {
@@ -193,24 +202,17 @@ function initializeDayForecast() {
     });
   }
 
-  Promise.all([...Array(DAY_FORECAST_DAYS)].map((_, index) => drawDaySection(index)))
-    .then(() => {
-      const sections = getDaySections();
-      sections.forEach((section, index) => {
-        section.id = `day-section-${index}`;
-        const heading = section.querySelector("h2");
-        section.dataset.dayLabel = heading ? heading.textContent : `Day ${index + 1}`;
-      });
-      setupDayNavigation();
-    })
-    .catch((error) => {
-      console.error("Error loading day forecast:", error);
-      const errorMessage = document.getElementById("error-message");
-      if (errorMessage) {
-        errorMessage.textContent = "Error loading day forecast. Please try again later.";
-        errorMessage.style.display = "block";
-      }
-    });
+  try {
+    const results = await Promise.all(REGIONS.map((region) => fetchRegionForecast(region)));
+    renderGroupedDayForecast(results);
+  } catch (error) {
+    console.error("Error loading day forecast:", error);
+    const errorMessage = document.getElementById("error-message");
+    if (errorMessage) {
+      errorMessage.textContent = "Error loading day forecast. Please try again later.";
+      errorMessage.style.display = "block";
+    }
+  }
 }
 
 if (document.readyState === "loading") {

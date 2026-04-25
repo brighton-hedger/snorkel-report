@@ -9,6 +9,7 @@ const TIDE_CHART_PAD_BOTTOM = 48;
 const ICONS = {
   wind: "assets/wind_emoji.svg",
   waves: "assets/wave_emoji.svg",
+  swell: "assets/swell_emoji.svg",
   sea: "assets/water_temp_emoji.svg",
   current: "assets/current_emoji.svg",
   weatherSun: "assets/sun_emoji.svg",
@@ -27,6 +28,13 @@ function formatClock(value) {
 
 function estimateLabelWidth(text, perChar, base) {
   return text.length * perChar + base;
+}
+
+function toSafeId(value) {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function buildWeatherCard(data) {
@@ -82,7 +90,7 @@ function buildConditionCards(data) {
     },
     weather,
     {
-      icon: ICONS.waves,
+      icon: ICONS.swell,
       label: "Swell",
       value: `${Number.isFinite(data.swellHeight) ? data.swellHeight.toFixed(1) : "--"} ft${Number.isFinite(data.swellPeriod) && data.swellPeriod > 0 ? ` · ${data.swellPeriod.toFixed(0)}s` : ""}`
     }
@@ -127,180 +135,15 @@ function buildTideSummary(tideData) {
   return `
     <div class="map-tide-summary">
       <div class="map-tide-summary-head">
-        <img src="${ICONS.tide}" alt="" class="map-chip-icon">
-        <strong>Tide</strong>
+        <div class="map-tide-summary-label">
+          <img src="${ICONS.tide}" alt="" class="map-chip-icon">
+          <strong>Tide</strong>
+        </div>
+        <span class="map-tide-trend">${trend}</span>
       </div>
       <div class="map-tide-summary-body">
-        <span class="map-tide-trend">${trend}</span>
         <span class="map-tide-summary-text">${detail}</span>
       </div>
-    </div>
-  `;
-}
-
-function buildTideChartDisclosure(region, tideData) {
-  return `
-    <details class="map-tide-disclosure">
-      <summary class="map-tide-toggle">Show tide chart</summary>
-      <div class="map-tide-disclosure-body">
-        ${buildMapTideChart(region, tideData)}
-      </div>
-    </details>
-  `;
-}
-
-function buildMapTideChart(region, tideData) {
-  const allPoints = (tideData?.predictions || [])
-    .map((point) => ({
-      date: new Date(point.time),
-      value: Number(point.value),
-      type: point.type || null
-    }))
-    .filter((point) => Number.isFinite(point.value) && !Number.isNaN(point.date.getTime()))
-    .sort((left, right) => left.date - right.date);
-  const curveSeries = (tideData?.curvePredictions?.length ? tideData.curvePredictions : tideData?.predictions || [])
-    .map((point) => ({
-      date: new Date(point.time),
-      value: Number(point.value),
-      type: point.type || null
-    }))
-    .filter((point) => Number.isFinite(point.value) && !Number.isNaN(point.date.getTime()))
-    .sort((left, right) => left.date - right.date);
-
-  if (allPoints.length < 2 || curveSeries.length < 2) {
-    return `<div class="map-tide-fallback">${tideData?.tideSummary || "Tide data unavailable"}</div>`;
-  }
-
-  const dayStart = new Date(curveSeries[0].date);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(curveSeries[0].date);
-  dayEnd.setHours(23, 59, 0, 0);
-  const firstPointTime = curveSeries[0].date.getTime();
-  const lastPointTime = curveSeries[curveSeries.length - 1].date.getTime();
-  const startTime = Math.min(dayStart.getTime(), firstPointTime);
-  const endTime = Math.max(dayEnd.getTime(), lastPointTime);
-  const duration = Math.max(endTime - startTime, 1);
-  const labeledPoints = allPoints.filter((point) => point.type === "H" || point.type === "L");
-  const values = curveSeries.map((point) => point.value);
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
-  const valueRange = Math.max(maxValue - minValue, 0.5);
-
-  const xAt = (time) =>
-    TIDE_CHART_PAD_X + ((time - startTime) / duration) * (TIDE_CHART_WIDTH - TIDE_CHART_PAD_X * 2);
-  const yAt = (value) =>
-    TIDE_CHART_HEIGHT -
-    TIDE_CHART_PAD_BOTTOM -
-    ((value - minValue) / valueRange) * (TIDE_CHART_HEIGHT - TIDE_CHART_PAD_TOP - TIDE_CHART_PAD_BOTTOM);
-
-  const samplePoints = [];
-  for (let i = 0; i < curveSeries.length - 1; i += 1) {
-    const left = curveSeries[i];
-    const right = curveSeries[i + 1];
-    const leftTime = left.date.getTime();
-    const rightTime = right.date.getTime();
-    const segmentDuration = Math.max(rightTime - leftTime, 1);
-
-    for (let step = 0; step <= 20; step += 1) {
-      const t = step / 20;
-      const eased = (1 - Math.cos(Math.PI * t)) / 2;
-      const time = leftTime + segmentDuration * t;
-      const value = left.value + (right.value - left.value) * eased;
-      samplePoints.push({
-        x: xAt(time),
-        y: yAt(value)
-      });
-    }
-  }
-
-  let nowMarker = null;
-  const nowTime = Date.now();
-  if (nowTime > startTime && nowTime < endTime) {
-    for (let i = 0; i < curveSeries.length - 1; i += 1) {
-      const left = curveSeries[i];
-      const right = curveSeries[i + 1];
-      const leftTime = left.date.getTime();
-      const rightTime = right.date.getTime();
-      if (nowTime >= leftTime && nowTime <= rightTime) {
-        const t = (nowTime - leftTime) / Math.max(rightTime - leftTime, 1);
-        const eased = (1 - Math.cos(Math.PI * t)) / 2;
-        nowMarker = {
-          x: xAt(nowTime),
-          y: yAt(left.value + (right.value - left.value) * eased)
-        };
-        break;
-      }
-    }
-  }
-
-  function buildBubbleBox(x, y, width, height, side, gap = 10) {
-    const left = Math.min(Math.max(x - width / 2, 6), TIDE_CHART_WIDTH - width - 6);
-    const top =
-      side === "top"
-        ? Math.min(Math.max(y - height - gap, 6), TIDE_CHART_HEIGHT - height - 6)
-        : Math.min(Math.max(y + gap, 6), TIDE_CHART_HEIGHT - height - 6);
-
-    return { left, top };
-  }
-
-  const hoverMarkers = labeledPoints
-    .map((point) => {
-      const x = xAt(point.date.getTime());
-      const y = yAt(point.value);
-      const valueText = `${point.value.toFixed(1)} ft`;
-      const timeText = formatClock(point.date);
-      const width = Math.max(estimateLabelWidth(valueText, 7, 16), estimateLabelWidth(timeText, 6, 16));
-      const height = 34;
-      const isHigh = point.type === "H";
-      const bubbleClass = isHigh ? "map-tide-label-box map-tide-label-box-high" : "map-tide-label-box map-tide-label-box-low";
-      const valueClass = isHigh ? "map-tide-label-value map-tide-label-value-high" : "map-tide-label-value map-tide-label-value-low";
-      const timeClass = isHigh ? "map-tide-label-time map-tide-label-time-high" : "map-tide-label-time map-tide-label-time-low";
-      const pointClass = isHigh ? "map-tide-point-high" : "map-tide-point-low";
-      const box = buildBubbleBox(x, y, width, height, isHigh ? "top" : "bottom");
-
-      return `
-        <g class="map-tide-marker-group" tabindex="0" aria-label="${isHigh ? "High tide" : "Low tide"} ${valueText} at ${timeText}">
-          <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="10" class="map-tide-hit-area"></circle>
-          <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.4" class="map-tide-point ${pointClass}"></circle>
-          <g class="map-tide-hover-bubble">
-            <rect x="${box.left.toFixed(1)}" y="${box.top.toFixed(1)}" width="${width.toFixed(1)}" height="${height}" rx="10" class="${bubbleClass}"></rect>
-            <text x="${(box.left + width / 2).toFixed(1)}" y="${(box.top + 14).toFixed(1)}" text-anchor="middle" class="${valueClass}">${valueText}</text>
-            <text x="${(box.left + width / 2).toFixed(1)}" y="${(box.top + 26).toFixed(1)}" text-anchor="middle" class="${timeClass}">${timeText}</text>
-          </g>
-        </g>
-      `;
-    })
-    .join("");
-
-  const nowMarkup = nowMarker
-    ? (() => {
-        const boxWidth = 52;
-        const boxHeight = 20;
-        const side = nowMarker.y > TIDE_CHART_HEIGHT * 0.56 ? "top" : "bottom";
-        const box = buildBubbleBox(nowMarker.x, nowMarker.y, boxWidth, boxHeight, side, 10);
-        return `
-          <g class="map-tide-now-group">
-            <circle cx="${nowMarker.x.toFixed(1)}" cy="${nowMarker.y.toFixed(1)}" r="5.2" class="map-tide-point map-tide-point-now"></circle>
-            <rect x="${box.left.toFixed(1)}" y="${box.top.toFixed(1)}" width="${boxWidth}" height="${boxHeight}" rx="10" class="map-tide-now-badge"></rect>
-            <text x="${(box.left + boxWidth / 2).toFixed(1)}" y="${(box.top + 13).toFixed(1)}" text-anchor="middle" class="map-tide-now-text">Now</text>
-          </g>
-        `;
-      })()
-    : "";
-
-  const curvePath = samplePoints.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" L ");
-
-  return `
-    <div class="map-tide-chart-card">
-      <div class="map-tide-chart-heading">
-        <span><img src="${ICONS.tide}" alt="" class="map-chip-icon map-chip-icon-inline">Tide</span>
-        <span>${region.title}</span>
-      </div>
-      <svg class="map-tide-chart" viewBox="0 0 ${TIDE_CHART_WIDTH} ${TIDE_CHART_HEIGHT}" preserveAspectRatio="none" aria-label="Daily tide chart">
-        <path d="M ${curvePath}" class="map-tide-curve"></path>
-        ${hoverMarkers}
-        ${nowMarkup}
-      </svg>
     </div>
   `;
 }
@@ -315,16 +158,7 @@ function bindPopupToggles(map) {
     const popupContent = popupEl.querySelector(".leaflet-popup-content");
     if (popupContent) {
       L.DomEvent.disableScrollPropagation(popupContent);
-      L.DomEvent.disableClickPropagation(popupContent);
     }
-
-    popupEl.querySelectorAll(".map-tide-disclosure").forEach((details) => {
-      details.addEventListener("toggle", () => {
-        window.requestAnimationFrame(() => {
-          event.popup.update();
-        });
-      });
-    });
   });
 }
 
@@ -393,11 +227,15 @@ function initializeMap() {
               ${buildConditionCards(data)}
             </div>
             ${buildTideSummary(tideData)}
-            ${buildTideChartDisclosure(region, tideData)}
           </div>
         `;
 
-        L.marker([region.lat, region.lng], { icon: createMarkerIcon(score) }).bindPopup(popupContent).addTo(map);
+        L.marker([region.lat, region.lng], { icon: createMarkerIcon(score) })
+          .bindPopup(popupContent, {
+            maxWidth: 435,
+            minWidth: 0
+          })
+          .addTo(map);
       });
     })
     .catch((error) => {

@@ -1,4 +1,3 @@
-// ==================== ENHANCED WEEK FORECAST SCRIPT ====================
 const {
   REGIONS,
   getDateKey,
@@ -8,67 +7,115 @@ const {
 } = window.SnorkelShared;
 
 const WEEK_FORECAST_DAYS = 7;
+const SHORE_ORDER = ["East", "South", "North", "West"];
 
-async function buildTable() {
-  const tbody = document.querySelector("#weekly-table tbody");
-  const thead = document.getElementById("table-header");
-  if (!tbody || !thead) return;
-
-  const days = [...Array(WEEK_FORECAST_DAYS)].map((_, index) => {
+function buildWeekDays() {
+  return [...Array(WEEK_FORECAST_DAYS)].map((_, index) => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     date.setDate(date.getDate() + index);
     return {
       dateKey: getDateKey(date),
-      label: date.toLocaleDateString("en-US", { weekday: "short" })
+      shortLabel: date.toLocaleDateString("en-US", { weekday: "short" }),
+      longLabel: date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
     };
   });
+}
 
+function buildRegionGroups() {
+  return SHORE_ORDER.map((shore) => ({
+    shore,
+    regions: REGIONS.filter((region) => region.shore === shore)
+  })).filter((group) => group.regions.length);
+}
+
+function buildWeeklyTableMarkup(shore, rows, days) {
+  return `
+    <details class="shore-section weekly-region-group">
+      <summary class="shore-summary">
+        <div class="shore-summary-main">
+          <div class="shore-summary-title">
+            <p>${shore} Shore</p>
+          </div>
+          <div class="shore-arrow" aria-hidden="true"></div>
+        </div>
+      </summary>
+      <div class="shore-details">
+        <div class="weekly-table-shell">
+        <table class="weekly-table">
+          <thead>
+            <tr>
+              <th>Region</th>
+              ${days.map((day) => `<th>${day.shortLabel}<span>${day.longLabel}</span></th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((row) => `
+              <tr>
+                <td class="region">${row.region.title}</td>
+                ${row.scores.map((score) => {
+                  if (score === null) {
+                    return "<td>--</td>";
+                  }
+
+                  const fixedScore = score.toFixed(1);
+                  return `<td style="color:${getScoreColor(score)};">${fixedScore}/10</td>`;
+                }).join("")}
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </details>
+  `;
+}
+
+async function buildWeekForecast() {
+  const container = document.getElementById("weekly-groups");
+  if (!container) return;
+
+  const days = buildWeekDays();
   const start = new Date();
   const end = new Date();
   end.setDate(start.getDate() + (WEEK_FORECAST_DAYS - 1));
-  const options = { month: "long", day: "numeric" };
+
   const weekRangeEl = document.getElementById("week-range");
   if (weekRangeEl) {
-    weekRangeEl.textContent = `${start.toLocaleDateString("en-US", options)} - ${end.toLocaleDateString("en-US", options)}`;
+    weekRangeEl.textContent = `${start.toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${end.toLocaleDateString("en-US", { month: "long", day: "numeric" })}`;
   }
 
-  const headerRow = document.createElement("tr");
-  headerRow.innerHTML = `<th>Region</th>${days.map((day) => `<th>${day.label}</th>`).join("")}`;
-  thead.innerHTML = "";
-  thead.appendChild(headerRow);
-  tbody.innerHTML = "";
+  const forecastResults = await Promise.all(
+    REGIONS.map(async (region) => {
+      try {
+        const forecast = await fetchForecast(region, { forecastDays: WEEK_FORECAST_DAYS });
+        return {
+          region,
+          scores: days.map((day) => getDaylightAverageScore(forecast.hourly, region, day.dateKey))
+        };
+      } catch (error) {
+        console.error(`Error fetching data for ${region.title}:`, error);
+        return {
+          region,
+          scores: days.map(() => null)
+        };
+      }
+    })
+  );
 
-  for (const region of REGIONS) {
-    const row = document.createElement("tr");
-    row.innerHTML = `<td class="region">${region.title}</td>${days.map(() => "<td>--</td>").join("")}`;
-    tbody.appendChild(row);
+  const groupedMarkup = buildRegionGroups().map((group) => {
+    const rows = group.regions
+      .map((region) => forecastResults.find((result) => result.region.title === region.title))
+      .filter(Boolean);
+    return buildWeeklyTableMarkup(group.shore, rows, days);
+  });
 
-    try {
-      const forecast = await fetchForecast(region, { forecastDays: WEEK_FORECAST_DAYS });
-
-      days.forEach((day, dayIndex) => {
-        const avg = getDaylightAverageScore(forecast.hourly, region, day.dateKey);
-        const cell = row.children[dayIndex + 1];
-
-        if (avg === null) {
-          cell.textContent = "--";
-          return;
-        }
-
-        const avgFixed = avg.toFixed(1);
-        cell.textContent = `${avgFixed}/10`;
-        cell.style.color = getScoreColor(parseFloat(avgFixed));
-      });
-    } catch (error) {
-      console.error(`Error fetching data for ${region.title}:`, error);
-    }
-  }
+  container.innerHTML = groupedMarkup.join("");
 }
 
 function initializeWeekForecast() {
-  buildTable().catch((error) => {
-    console.error("Error building week forecast table:", error);
+  buildWeekForecast().catch((error) => {
+    console.error("Error building week forecast tables:", error);
   });
 }
 

@@ -19,6 +19,7 @@ const DAYLIGHT_END_HOUR = 18;
 const ICONS = {
   wind: "assets/wind_emoji.svg",
   waves: "assets/wave_emoji.svg",
+  swell: "assets/swell_emoji.svg",
   sea: "assets/water_temp_emoji.svg",
   current: "assets/current_emoji.svg",
   weatherSun: "assets/sun_emoji.svg",
@@ -201,7 +202,7 @@ function buildConditionChips(metrics, tideData, bestTime, bestScore) {
     }
 
     chips.push({
-      icon: ICONS.waves,
+      icon: ICONS.swell,
       label: "Swell",
       value: swellParts.join(" · ")
     });
@@ -227,6 +228,11 @@ function buildConditionChips(metrics, tideData, bestTime, bestScore) {
 function buildConditionBreakdown(metrics, region, tideData, scoreDetails = []) {
   const good = [];
   const bad = [];
+  const tideLevels = (tideData?.predictions || [])
+    .map((point) => Number(point.value))
+    .filter((value) => Number.isFinite(value));
+  const tideSwing = tideLevels.length ? Math.max(...tideLevels) - Math.min(...tideLevels) : null;
+  const lowestTide = tideLevels.length ? Math.min(...tideLevels) : null;
 
   if (region.protected) {
     good.push(`${region.title} gets some protection from its cove and shoreline shape.`);
@@ -256,13 +262,20 @@ function buildConditionBreakdown(metrics, region, tideData, scoreDetails = []) {
     bad.push(`Current strength is up, so drift and exits may be tougher.`);
   }
 
-  if (metrics.clouds <= 35 && metrics.rain <= 0.02) {
-    good.push(`Clearer weather should help light and underwater visibility.`);
+  if (metrics.clouds <= 20 && metrics.rain <= 0.01) {
+    good.push(`Clearer, sunnier weather should help with light and underwater visibility.`);
+  } else if (metrics.clouds <= 35 && metrics.rain <= 0.02) {
+    good.push(`Fairly clear weather should help keep visibility better than a cloudy day.`);
   } else {
-    if (metrics.clouds >= 60) {
+    if (metrics.clouds >= 80) {
+      bad.push(`Very cloudy skies can flatten the light and make snorkeling look murkier.`);
+    } else if (metrics.clouds >= 60) {
       bad.push(`Cloud cover may flatten the light and make the water look murkier.`);
     }
-    if (metrics.rain > 0.02) {
+
+    if (metrics.rain > 0.1) {
+      bad.push(`Rainy conditions are a negative here because runoff and lower light can hurt visibility.`);
+    } else if (metrics.rain > 0.02) {
       bad.push(`Rain could reduce visibility and make the surface less pleasant.`);
     }
   }
@@ -271,12 +284,26 @@ function buildConditionBreakdown(metrics, region, tideData, scoreDetails = []) {
     if (metrics.tide >= 1 && metrics.tide <= 2.5) {
       good.push(`Tide level is in a more comfortable middle range for reef depth.`);
     } else if (metrics.tide < 0) {
+      bad.push(`Extremely low tide can mean less clearance over shallow reef and rock.`);
+    } else if (metrics.tide < 0.5) {
       bad.push(`Lower tide can mean less clearance over shallow reef and rock.`);
     }
   }
 
-  if (tideData?.tideSummary) {
-    good.push(`Tide is currently ${tideData.isRising ? "rising" : "falling"}, which helps frame the near-term trend.`);
+  if (Number.isFinite(tideSwing) && tideSwing <= 1.5) {
+    good.push(`A smaller tide swing today should make reef depth a bit steadier.`);
+  } else if (Number.isFinite(tideSwing) && tideSwing >= 3.5) {
+    bad.push(`A large tide swing today can make reef depth and entry conditions less consistent.`);
+  }
+
+  if (Number.isFinite(lowestTide) && lowestTide < 0) {
+    bad.push(`The day reaches an extremely low tide, which is tougher for shallow snorkeling spots.`);
+  }
+
+  if (tideData?.tideSummary && Number.isFinite(tideSwing) && tideSwing < 3.5) {
+    good.push(`Tide is currently ${tideData.isRising ? "rising" : "falling"}, without an unusually large swing.`);
+  } else if (tideData?.tideSummary) {
+    bad.push(`Tide is currently ${tideData.isRising ? "rising" : "falling"}, and the larger swing can make conditions change faster.`);
   }
 
   scoreDetails.forEach((detail) => {
@@ -561,13 +588,6 @@ function buildShoreSection(shoreName, shoreResults) {
         </div>
       </summary>
       <div class="shore-details">
-        <div class="shore-expanded-header">
-          <div>
-            <p>${shoreName} Shore</p>
-            <h3>Regional Average <span style="color:${color};">${average}/10</span></h3>
-          </div>
-          <div class="shore-expanded-meta">${shoreResults.length} spots · tap arrow to collapse</div>
-        </div>
         <div class="${gridClass}">
           ${shoreResults.map((result) => buildSpotCard(result)).join("")}
         </div>
@@ -712,3 +732,4 @@ if (document.readyState === "loading") {
 } else {
   initializeReport();
 }
+
