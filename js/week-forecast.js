@@ -54,6 +54,9 @@ function buildWeeklyTableMarkup(shore, rows, days) {
               <tr>
                 <td class="region">${row.region.title}</td>
                 ${row.scores.map((score) => {
+                  if (row.loading) {
+                    return "<td>...</td>";
+                  }
                   if (score === null) {
                     return "<td>--</td>";
                   }
@@ -71,6 +74,22 @@ function buildWeeklyTableMarkup(shore, rows, days) {
   `;
 }
 
+function renderGroupedWeekForecast(resultMap, days) {
+  const container = document.getElementById("weekly-groups");
+  if (!container) return;
+
+  const groupedMarkup = buildRegionGroups().map((group) => {
+    const rows = group.regions.map((region) => resultMap.get(region.title) || {
+      region,
+      scores: days.map(() => null),
+      loading: true
+    });
+    return buildWeeklyTableMarkup(group.shore, rows, days);
+  });
+
+  container.innerHTML = groupedMarkup.join("");
+}
+
 async function buildWeekForecast() {
   const container = document.getElementById("weekly-groups");
   if (!container) return;
@@ -85,32 +104,30 @@ async function buildWeekForecast() {
     weekRangeEl.textContent = `${start.toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${end.toLocaleDateString("en-US", { month: "long", day: "numeric" })}`;
   }
 
-  const forecastResults = await Promise.all(
+  const resultMap = new Map();
+  renderGroupedWeekForecast(resultMap, days);
+
+  await Promise.all(
     REGIONS.map(async (region) => {
       try {
         const forecast = await fetchForecast(region, { forecastDays: WEEK_FORECAST_DAYS });
-        return {
+        resultMap.set(region.title, {
           region,
-          scores: days.map((day) => getDaylightAverageScore(forecast.hourly, region, day.dateKey))
-        };
+          scores: days.map((day) => getDaylightAverageScore(forecast.hourly, region, day.dateKey)),
+          loading: false
+        });
       } catch (error) {
         console.error(`Error fetching data for ${region.title}:`, error);
-        return {
+        resultMap.set(region.title, {
           region,
-          scores: days.map(() => null)
-        };
+          scores: days.map(() => null),
+          loading: false
+        });
       }
+
+      renderGroupedWeekForecast(resultMap, days);
     })
   );
-
-  const groupedMarkup = buildRegionGroups().map((group) => {
-    const rows = group.regions
-      .map((region) => forecastResults.find((result) => result.region.title === region.title))
-      .filter(Boolean);
-    return buildWeeklyTableMarkup(group.shore, rows, days);
-  });
-
-  container.innerHTML = groupedMarkup.join("");
 }
 
 function initializeWeekForecast() {

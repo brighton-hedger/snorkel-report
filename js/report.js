@@ -28,6 +28,7 @@ const ICONS = {
   bestWindow: "assets/best_time_emoji.svg",
   tide: "assets/tide_emoji.svg"
 };
+const REGION_ORDER_INDEX = new Map(REGIONS.map((region, index) => [region.title, index]));
 
 function getSafeMetrics(metrics) {
   return {
@@ -122,40 +123,7 @@ function getWeatherChip(metrics) {
 }
 
 function findBestDisplayTime(hourlyData, region) {
-  const sharedBest = findBestSnorkelTime(hourlyData || [], region);
-  if (sharedBest?.time && sharedBest.time !== "N/A") {
-    return sharedBest;
-  }
-
-  const now = Date.now();
-  const daylightEntries = (hourlyData || []).filter(
-    (entry) => entry.hour >= DAYLIGHT_START_HOUR && entry.hour <= DAYLIGHT_END_HOUR
-  );
-  const futureDaylightEntries = daylightEntries.filter((entry) => new Date(entry.time).getTime() > now);
-  const candidateEntries = futureDaylightEntries.length ? futureDaylightEntries : daylightEntries;
-
-  if (!candidateEntries.length) {
-    return { time: "N/A", score: 0 };
-  }
-
-  let bestEntry = null;
-  let bestScore = -Infinity;
-  for (const entry of candidateEntries) {
-    const score = calculateRegionalScore(entry, region);
-    if (score > bestScore) {
-      bestScore = score;
-      bestEntry = entry;
-    }
-  }
-
-  if (!bestEntry) {
-    return { time: "N/A", score: 0 };
-  }
-
-  return {
-    time: formatClock(bestEntry.time),
-    score: bestScore
-  };
+  return findBestSnorkelTime(hourlyData || [], region);
 }
 
 function buildConditionChips(metrics, tideData, bestTime, bestScore) {
@@ -661,11 +629,27 @@ function renderShoreSections(results) {
 
   const groupedResults = SHORE_ORDER.map((shore) => ({
     shore,
-    results: results.filter((result) => result.region.shore === shore)
+    results: results
+      .filter((result) => result.region.shore === shore)
+      .sort((left, right) => (REGION_ORDER_INDEX.get(left.region.title) ?? 0) - (REGION_ORDER_INDEX.get(right.region.title) ?? 0))
   })).filter((group) => group.results.length > 0);
 
   container.innerHTML = groupedResults.map((group) => buildShoreSection(group.shore, group.results)).join("");
   initializeSpotCardFlips(container);
+}
+
+function getCompletedShoreResults(resultMap) {
+  return SHORE_ORDER.flatMap((shore) => {
+    const shoreRegions = REGIONS.filter((region) => region.shore === shore);
+    const isComplete = shoreRegions.every((region) => resultMap.has(region.title));
+    if (!isComplete) {
+      return [];
+    }
+
+    return shoreRegions
+      .map((region) => resultMap.get(region.title))
+      .filter(Boolean);
+  });
 }
 
 function initializeSpotCardFlips(container) {
@@ -714,14 +698,30 @@ async function initializeReport() {
   }
 
   try {
-    const results = await Promise.all(REGIONS.map((region) => loadRegionResult(region)));
+    const resultMap = new Map();
 
-    if (!results.length) {
+    await Promise.all(
+      REGIONS.map(async (region) => {
+        const result = await loadRegionResult(region);
+        resultMap.set(region.title, result);
+
+        const orderedResults = getCompletedShoreResults(resultMap);
+        if (!orderedResults.length) {
+          return;
+        }
+
+        renderIslandSummary(orderedResults);
+        renderShoreSections(orderedResults);
+      })
+    );
+
+    if (!resultMap.size) {
       throw new Error("No snorkel results were available.");
     }
 
-    renderIslandSummary(results);
-    renderShoreSections(results);
+    renderShoreSections(
+      REGIONS.map((entry) => resultMap.get(entry.title)).filter(Boolean)
+    );
   } catch (error) {
     renderError(error);
   }

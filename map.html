@@ -3,13 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Map - Oʻahu Snorkel Report</title>
+  <title>Oahu Snorkel Report Map | Shore by Shore Conditions</title>
+  <meta
+    name="description"
+    content="Explore the Oahu snorkel report map with shore-by-shore snorkeling conditions, scores, and live ocean snapshots around Oahu."
+  />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://snorkelreports.com/map" />
+  <meta property="og:title" content="Oahu Snorkel Report Map" />
+  <meta
+    property="og:description"
+    content="Interactive Oahu snorkel map with snorkeling scores and shore-specific ocean conditions."
+  />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://snorkelreports.com/map" />
   <link rel="icon" type="image/svg+xml" href="assets/snorkeling_turtle_favicon.svg" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     #map {
-      height: 600px;
+      height: 540px;
       width: 100%;
       border-radius: 12px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
@@ -82,222 +95,191 @@
     }
     .region-popup .towns {
       font-size: 12px;
-      color: #62706e;
-      margin-top: 4px;
+      color: #777;
+      margin-top: 2px;
     }
     .region-popup .score {
-      min-width: 86px;
-      text-align: center;
-      border: 2px solid currentColor;
-      border-radius: 999px;
-      padding: 7px 10px;
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 700;
+      border: 2px solid currentColor;
+      padding: 6px 12px;
+      border-radius: 999px;
+      line-height: 1;
+      white-space: nowrap;
       background: rgba(255, 255, 255, 0.92);
-    }
-    .map-popup-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 10px;
     }
     .map-best-window-banner {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      padding: 8px 10px;
-      border-radius: 12px;
-      background: #f3fbfa;
-      border: 1px solid rgba(42, 161, 152, 0.1);
-      min-height: 44px;
-      margin-bottom: 10px;
+      gap: 12px;
+      background: #eef9f8;
+      border: 1px solid rgba(42, 161, 152, 0.12);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
     }
-    .map-best-window-head {
-      display: inline-flex;
+    .map-best-window-head,
+    .map-condition-head,
+    .map-tide-summary-label {
+      display: flex;
       align-items: center;
-      gap: 6px;
-      min-width: 0;
+      gap: 8px;
     }
-    .map-best-window-head strong {
+    .map-best-window-head strong,
+    .map-condition-head strong,
+    .map-tide-summary-label strong {
+      color: #65807f;
       font-size: 11px;
-      text-transform: uppercase;
       letter-spacing: 0.08em;
-      color: #688381;
-      line-height: 1;
+      text-transform: uppercase;
     }
     .map-best-window-banner span {
-      font-size: 13px;
-      color: #204e4a;
+      font-size: 15px;
+      color: #295784;
       white-space: nowrap;
     }
-    .map-best-window-banner em {
-      font-style: normal;
-      font-weight: 700;
+    .map-popup-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
     }
-    .map-condition-chip {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      padding: 8px 10px;
-      border-radius: 12px;
-      background: #f3fbfa;
-      border: 1px solid rgba(42, 161, 152, 0.1);
-    }
-    .map-condition-head {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 0;
-    }
+    .map-condition-chip,
     .map-tide-summary {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 8px 10px;
-      width: 100%;
-      min-width: 0;
+      background: linear-gradient(180deg, #f7fefd, #eef8f7);
+      border: 1px solid rgba(42, 161, 152, 0.12);
+      border-radius: 16px;
+      padding: 12px;
       box-sizing: border-box;
-      border-radius: 12px;
-      background: #f3fbfa;
-      border: 1px solid rgba(42, 161, 152, 0.1);
-      margin-bottom: 10px;
+      min-width: 0;
+    }
+    .map-condition-chip span,
+    .map-tide-summary-text {
+      display: block;
+      margin-top: 6px;
+      color: #244a47;
+      font-size: 13px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+    .map-chip-icon {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 auto;
     }
     .map-tide-summary-head {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 6px;
-      width: 100%;
-      min-width: 0;
-    }
-    .map-tide-summary-label {
-      display: inline-flex;
-      flex: 1 1 auto;
       align-items: center;
-      gap: 6px;
+      gap: 10px;
       min-width: 0;
-    }
-    .map-tide-summary-head strong {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #688381;
-      line-height: 1;
-    }
-    .map-tide-summary-body {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
     }
     .map-tide-trend {
-      display: inline-flex;
-      flex: 0 0 auto;
-      white-space: nowrap;
-      max-width: 100%;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(79, 149, 214, 0.14);
-      color: #2f5f92;
       font-size: 11px;
       font-weight: 700;
-      text-transform: uppercase;
       letter-spacing: 0.08em;
-    }
-    .map-tide-summary-text {
-      font-size: 13px;
-      color: #204e4a;
-      line-height: 1.35;
-    }
-    .map-chip-icon {
-      width: 18px;
-      height: 18px;
-      object-fit: contain;
-      display: inline-block;
-    }
-    .map-chip-icon-inline {
-      width: 16px;
-      height: 16px;
-      margin-right: 6px;
-    }
-    .map-condition-head strong {
-      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #688381;
-      line-height: 1;
+      color: #2f6fb6;
+      background: rgba(47, 111, 182, 0.12);
+      border-radius: 999px;
+      padding: 6px 10px;
+      white-space: nowrap;
+      flex: 0 0 auto;
     }
-    .map-condition-chip span {
-      font-size: 13px;
-      color: #204e4a;
-      line-height: 1.25;
-    }
-    .map-popup-unavailable {
-      font-size: 13px;
-      color: #54708e;
+    .leaflet-container a.leaflet-popup-close-button {
+      color: #7a7a7a;
+      padding: 8px 10px 0 0;
     }
     .legend {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      line-height: 1.8;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      color: #264c49;
     }
     .legend-item {
       display: flex;
       align-items: center;
       gap: 8px;
+      margin-top: 6px;
     }
     .legend-color {
-      width: 20px;
-      height: 20px;
-      border-radius: 4px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex: 0 0 auto;
     }
-    @media (max-width: 768px) {
-      #map {
-        height: 450px;
+    @media (max-width: 700px) {
+      .map-container {
+        padding: 12px;
       }
-      .region-popup {
-        width: 100%;
+      #map {
+        height: 470px;
+      }
+      .leaflet-popup-content-wrapper {
+        width: min(88vw, 332px);
+        max-width: 332px;
       }
       .leaflet-popup-content {
-        margin: 12px 14px 14px;
+        margin: 12px;
+        max-height: min(62vh, 480px);
+        padding-right: 2px;
+      }
+      .map-popup-top {
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .region-popup h3 {
+        font-size: 17px;
+      }
+      .region-popup .score {
+        font-size: 18px;
+        padding: 5px 10px;
+      }
+      .map-best-window-banner,
+      .map-condition-chip,
+      .map-tide-summary {
+        padding: 10px;
+      }
+      .map-best-window-banner span,
+      .map-condition-chip span,
+      .map-tide-summary-text {
+        font-size: 12px;
       }
       .map-popup-grid {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
-      .map-header h1 {
-        font-size: 24px;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
       }
     }
   </style>
 </head>
 <body>
-  <!-- Navigation -->
   <nav>
     <a href="index.html">Snorkel Report</a>
     <a href="day-forecast.html">Day Forecast</a>
     <a href="week-forecast.html">Week Forecast</a>
     <a href="map.html">Map</a>
+    <a href="detailed-reports.html">Detailed Reports</a>
     <a href="feedback.html">Feedback</a>
+    <a href="about.html">About</a>
+    <a href="blog.html">Blog</a>
   </nav>
 
-  <!-- Main Container -->
-  <div class="container map-container">
-    <!-- Map Header -->
-    <div class="map-header">
-      <h1>Oʻahu Snorkel Regions</h1>
-      <p>Interactive map showing all snorkel regions with current conditions</p>
+  <div class="container">
+    <div class="map-container">
+      <div class="map-header">
+        <h1>Oʻahu Snorkel Regions</h1>
+        <p>Interactive map showing all snorkel regions with current conditions</p>
+      </div>
+      <div id="map"></div>
     </div>
-
-    <!-- Map -->
-    <div id="map"></div>
   </div>
 
-  <!-- Footer -->
   <footer>Report generated by Brighton Hedger using Open-Meteo API</footer>
 
-  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/navigation.js"></script>
   <script src="js/snorkel-shared.js"></script>

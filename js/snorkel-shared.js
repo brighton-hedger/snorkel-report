@@ -216,8 +216,8 @@
   }
 
   function getScoreColor(score) {
-    if (score >= 8) return "#1eaa5a";
-    if (score >= 5) return "#e6a800";
+    if (score >= 7.5) return "#1eaa5a";
+    if (score >= 4.5) return "#e6a800";
     return "#cc3300";
   }
 
@@ -556,12 +556,22 @@
 
   function findBestSnorkelTime(hourlyData, region) {
     const now = new Date();
+    const nowTime = now.getTime();
+    const pastEntries = hourlyData.filter((entry) => new Date(entry.time).getTime() <= nowTime);
+    const currentEntry = pastEntries[pastEntries.length - 1] || hourlyData[0] || null;
+    const currentScore = currentEntry ? calculateRegionalScore(currentEntry, region) : 0;
+    const activeDateKey = currentEntry?.dateKey || null;
     let best = { score: -1, time: null };
 
     hourlyData.forEach((entry) => {
       const time = new Date(entry.time);
       const hour = time.getHours();
-      if (time > now && hour >= DAYLIGHT_START_HOUR && hour <= DAYLIGHT_END_HOUR) {
+      if (
+        time > now &&
+        hour >= DAYLIGHT_START_HOUR &&
+        hour < DAYLIGHT_END_HOUR &&
+        (!activeDateKey || entry.dateKey === activeDateKey)
+      ) {
         const score = calculateRegionalScore(entry, region);
         if (score > best.score) {
           best = { score, time };
@@ -569,12 +579,17 @@
       }
     });
 
-    return best.time
-      ? {
-          time: best.time.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
-          score: best.score
-        }
-      : { time: "N/A", score: 0 };
+    if (best.time && best.score > currentScore) {
+      return {
+        time: best.time.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }),
+        score: best.score
+      };
+    }
+
+    return {
+      time: "Now",
+      score: currentScore
+    };
   }
 
   function getDaylightScoreSeries(hourlyData, region, dateKey) {

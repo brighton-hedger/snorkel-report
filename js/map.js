@@ -162,6 +162,33 @@ function bindPopupToggles(map) {
   });
 }
 
+function addRegionMarker(map, createMarkerIcon, region, score, data, tideData, best) {
+  const color = getScoreColor(score);
+  const popupContent = `
+    <div class="region-popup">
+      <div class="map-popup-top">
+        <div>
+          <h3>${region.title}</h3>
+          <div class="towns">${region.towns}</div>
+        </div>
+        <div class="score" style="color:${color}; border-color:${color};">${score}/10</div>
+      </div>
+      ${buildBestTimeBanner(best)}
+      <div class="map-popup-grid">
+        ${buildConditionCards(data)}
+      </div>
+      ${buildTideSummary(tideData)}
+    </div>
+  `;
+
+  L.marker([region.lat, region.lng], { icon: createMarkerIcon(score) })
+    .bindPopup(popupContent, {
+      maxWidth: 435,
+      minWidth: 0
+    })
+    .addTo(map);
+}
+
 function initializeMap() {
   const map = L.map("map").setView([21.4389, -157.9561], 10);
 
@@ -194,53 +221,20 @@ function initializeMap() {
     });
   };
 
-  Promise.all(
-    REGIONS.map(async (region) => {
-      try {
-        const [forecast, tideData] = await Promise.all([
-          fetchForecast(region, { forecastHours: 24 }),
-          fetchTide(region.stationId)
-        ]);
-        const score = calculateRegionalScore(forecast.current, region);
-        const best = findBestSnorkelTime(forecast.hourly || [], region);
-        return { region, score, data: forecast.current, tideData, best };
-      } catch (error) {
-        console.error(`Error fetching data for ${region.title}:`, error);
-        return { region, score: 0, data: null, tideData: null, best: { time: "N/A", score: 0 } };
-      }
-    })
-  )
-    .then((results) => {
-      results.forEach(({ region, score, data, tideData, best }) => {
-        const color = getScoreColor(score);
-        const popupContent = `
-          <div class="region-popup">
-            <div class="map-popup-top">
-              <div>
-                <h3>${region.title}</h3>
-                <div class="towns">${region.towns}</div>
-              </div>
-              <div class="score" style="color:${color}; border-color:${color};">${score}/10</div>
-            </div>
-            ${buildBestTimeBanner(best)}
-            <div class="map-popup-grid">
-              ${buildConditionCards(data)}
-            </div>
-            ${buildTideSummary(tideData)}
-          </div>
-        `;
-
-        L.marker([region.lat, region.lng], { icon: createMarkerIcon(score) })
-          .bindPopup(popupContent, {
-            maxWidth: 435,
-            minWidth: 0
-          })
-          .addTo(map);
-      });
-    })
-    .catch((error) => {
-      console.error("Error loading map data:", error);
-    });
+  REGIONS.forEach(async (region) => {
+    try {
+      const [forecast, tideData] = await Promise.all([
+        fetchForecast(region, { forecastHours: 24 }),
+        fetchTide(region.stationId)
+      ]);
+      const score = calculateRegionalScore(forecast.current, region);
+      const best = findBestSnorkelTime(forecast.hourly || [], region);
+      addRegionMarker(map, createMarkerIcon, region, score, forecast.current, tideData, best);
+    } catch (error) {
+      console.error(`Error fetching data for ${region.title}:`, error);
+      addRegionMarker(map, createMarkerIcon, region, 0, null, null, { time: "N/A", score: 0 });
+    }
+  });
 
   const legend = L.control({ position: "bottomright" });
   legend.onAdd = function onAdd() {

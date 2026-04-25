@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Oahu Snorkel Report | How the Scores Work</title>
+  <meta
+    name="description"
+    content="Learn how Oahu Snorkel Report uses waves, wind, current, tide, swell, and weather data to estimate daily snorkeling conditions around Oahu."
+  />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://snorkelreports.com/about" />
+  <meta property="og:title" content="About Oahu Snorkel Report" />
+  <meta
+    property="og:description"
+    content="Learn how Oahu Snorkel Report builds daily snorkeling scores from live ocean and weather conditions around Oahu."
+  />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://snorkelreports.com/about" />
+  <link rel="icon" type="image/svg+xml" href="assets/snorkeling_turtle_favicon.svg" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <nav>
+    <a href="index.html">Snorkel Report</a>
+    <a href="day-forecast.html">Day Forecast</a>
+    <a href="week-forecast.html">Week Forecast</a>
+    <a href="map.html">Map</a>
+    <a href="detailed-reports.html">Detailed Reports</a>
+    <a href="feedback.html">Feedback</a>
+    <a href="about.html">About</a>
+    <a href="blog.html">Blog</a>
+  </nav>
+
+  <div class="container">
+    <div class="content-hero">
+      <h1>About Oahu Snorkel Report</h1>
+      <p>
+        Oahu Snorkel Report is a daily snorkeling conditions site built to make shore-by-shore ocean conditions easier to understand. It combines live marine forecast data, weather forecast data, and tide information into region-specific snorkel scores for Oahu.
+      </p>
+    </div>
+
+    <div class="content-stack">
+      <section class="content-card">
+        <h2>About Me</h2>
+        <p>
+          I’m Brighton Hedger, a recent Hawaiʻi Pacific University graduate with an MS in Marine Science. I now work as a Data Management Specialist with NOAA at the Pacific Islands Fisheries Science Center.
+        </p>
+        <p>
+          I originally built this app for myself because I was tired of bouncing between multiple weather and ocean apps just to figure out where snorkeling might be best on a given day. As the idea grew, it turned into a site I wanted to share with other people who care about finding cleaner, calmer water without spending half the morning piecing conditions together by hand.
+        </p>
+        <p>
+          The site is still evolving, and feedback is always welcome, whether you spot an inaccurate rating or a website bug. The goal is to keep making it more useful, more accurate, and more intuitive over time.
+        </p>
+      </section>
+
+      <section class="content-card">
+        <h2>What the site is trying to do</h2>
+        <p>
+          The goal is not to predict every in-water detail perfectly. The goal is to give a fast, useful read on whether a region looks better or worse for snorkeling right now, and why. That means the score is meant to be directional and practical, not a guarantee.
+        </p>
+      </section>
+
+      <section class="content-card">
+        <h2>How the snorkel score works</h2>
+        <p>
+          Each regional score is built from a mix of wave height, swell, wind chop, wind direction, current, tide, cloud cover, and rain. The site also accounts for differences between Oahu shorelines, including whether a region is more exposed or more protected.
+        </p>
+        <p>
+          In general, the model tends to reward calmer water, lower chop, manageable current, better visibility conditions, and shoreline protection. It tends to penalize larger waves, stronger wind chop, rougher swell, poor tide setup, and weather that can reduce visibility.
+        </p>
+      </section>
+
+      <section class="content-card">
+        <h2>Why regional scoring matters</h2>
+        <p>
+          A single island-wide surf or wind number does not tell the whole story. East, South, North, and West shore regions can respond very differently to the same ocean pattern. Protected coves, reef shape, and shoreline direction all change how snorkeling conditions feel in the water.
+        </p>
+      </section>
+
+      <section class="content-card">
+        <h2>How field feedback helps</h2>
+        <p>
+          The feedback page exists so real-world observations can be compared against the live model snapshot. That makes it possible to see where the score was too high, too low, or missing something important like visibility, runoff, tide depth, or local chop.
+        </p>
+      </section>
+
+      <section class="content-card">
+        <h2>Data sources</h2>
+        <p>
+          The site uses marine and weather forecast data from Open-Meteo and tide information from NOAA. Those sources are strong for broad conditions, but local water clarity, reef crowding, runoff, and recent surf history can still change the real snorkeling experience.
+        </p>
+      </section>
+    </div>
+  </div>
+
+  <footer>Report generated by Brighton Hedger using Open-Meteo API</footer>
+
+  <script src="js/navigation.js"></script>
+</body>
+</html>

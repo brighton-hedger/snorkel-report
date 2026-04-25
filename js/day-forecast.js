@@ -104,13 +104,42 @@ function renderDayChart(canvasId, regionTitle, dayLabel, points) {
         }
       },
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          displayColors: false,
+          callbacks: {
+            title(items) {
+              return items[0]?.label || "";
+            },
+            label(context) {
+              const value = typeof context.parsed?.y === "number" ? context.parsed.y.toFixed(1) : "--";
+              return `${value}/10`;
+            }
+          }
+        }
       }
     }
   });
 }
 
-function buildRegionCardMarkup(regionResult) {
+function buildRegionCardMarkup(regionOrResult) {
+  if (!regionOrResult?.days) {
+    return `
+      <div class="region-day-card">
+        <div class="region-day-card-head">
+          <div>
+            <h3>${regionOrResult.title}</h3>
+            <p>${regionOrResult.towns}</p>
+          </div>
+          <div class="forecast-summary-actions">
+            <span class="forecast-summary-label">Loading...</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  const regionResult = regionOrResult;
   return `
     <details class="region-day-card region-subregion-dropdown">
       <summary class="region-day-card-head">
@@ -142,15 +171,14 @@ function buildRegionCardMarkup(regionResult) {
   `;
 }
 
-function renderGroupedDayForecast(results) {
+function renderGroupedDayForecast(resultMap) {
   const container = document.getElementById("day-region-groups");
   if (!container) return;
 
   const groupedResults = buildRegionGroups().map((group) => ({
     shore: group.shore,
-    results: group.regions
-      .map((region) => results.find((result) => result.region.title === region.title))
-      .filter(Boolean)
+    regions: group.regions,
+    results: group.regions.map((region) => resultMap.get(region.title) || null)
   }));
 
   container.innerHTML = groupedResults.map((group) => `
@@ -168,7 +196,7 @@ function renderGroupedDayForecast(results) {
       </summary>
       <div class="shore-details">
         <div class="region-day-card-list">
-          ${group.results.map((result) => buildRegionCardMarkup(result)).join("")}
+          ${group.regions.map((region, index) => buildRegionCardMarkup(group.results[index] || region)).join("")}
         </div>
       </div>
     </details>
@@ -176,6 +204,9 @@ function renderGroupedDayForecast(results) {
 
   groupedResults.forEach((group) => {
     group.results.forEach((result) => {
+      if (!result) {
+        return;
+      }
       result.days.forEach((day) => {
         if (!day.points.length) {
           return;
@@ -203,8 +234,16 @@ async function initializeDayForecast() {
   }
 
   try {
-    const results = await Promise.all(REGIONS.map((region) => fetchRegionForecast(region)));
-    renderGroupedDayForecast(results);
+    const resultMap = new Map();
+    renderGroupedDayForecast(resultMap);
+
+    await Promise.all(
+      REGIONS.map(async (region) => {
+        const result = await fetchRegionForecast(region);
+        resultMap.set(region.title, result);
+        renderGroupedDayForecast(resultMap);
+      })
+    );
   } catch (error) {
     console.error("Error loading day forecast:", error);
     const errorMessage = document.getElementById("error-message");
