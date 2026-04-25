@@ -36,6 +36,11 @@ function initializeNavigation() {
   const navLinks = document.querySelectorAll('nav a');
 
   navLinks.forEach(link => {
+    if (link.classList.contains('nav-home-logo')) {
+      link.classList.remove('active');
+      return;
+    }
+
     const href = normalizeRoute(link.getAttribute('href') || '');
     if (shouldMarkActive(href, currentPage)) {
       link.classList.add('active');

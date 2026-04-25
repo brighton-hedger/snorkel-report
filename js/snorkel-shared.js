@@ -230,8 +230,12 @@
 
   function getCurrentHourIndex(times) {
     const now = new Date();
-    const nextIndex = times.findIndex((time) => new Date(time) >= now);
-    return nextIndex === -1 ? Math.max(times.length - 1, 0) : nextIndex;
+    const nextIndex = times.findIndex((time) => new Date(time) > now);
+    if (nextIndex === -1) {
+      return Math.max(times.length - 1, 0);
+    }
+
+    return Math.max(nextIndex - 1, 0);
   }
 
   async function fetchJson(url) {
