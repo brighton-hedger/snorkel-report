@@ -53,10 +53,15 @@ nav a.active {
   padding: 0;
   background: transparent;
   border-radius: 999px;
+  transition: background-color 0.15s ease;
 }
 
 .nav-home-logo:hover {
   background: transparent;
+}
+
+.nav-home-logo:active {
+  background: rgba(42, 161, 152, 0.15);
 }
 
 .nav-home-logo img {
@@ -1351,6 +1356,11 @@ footer {
   width: 56px;
   height: 56px;
   flex: 0 0 auto;
+  transition: opacity 0.15s ease;
+}
+
+.home-brand-row:active img {
+  opacity: 0.7;
 }
 
 .home-hero-copy p {
