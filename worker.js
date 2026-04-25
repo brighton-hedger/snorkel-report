@@ -66,77 +66,86 @@ async function handleFeedbackSubmit(request, env) {
   const notes = String(body.notes || "").trim().slice(0, 2000);
   const now = new Date().toISOString();
 
-  await env.FEEDBACK_DB.prepare(
-    `INSERT INTO feedback_submissions (
-      region_title,
-      shore,
-      towns,
-      station_id,
-      observed_at,
-      submitted_at,
-      observed_score,
-      algorithm_score,
-      visibility_ft,
-      captured_at,
-      model_time,
-      model_date_key,
-      model_hour,
-      wave_height,
-      swell_height,
-      swell_period,
-      wind_wave_height,
-      wind_wave_period,
-      sea_temp,
-      current_speed,
-      current_dir,
-      tide_height,
-      wind_speed,
-      wind_dir,
-      cloud_cover,
-      rain_inches,
-      tide_summary,
-      tide_is_rising,
-      tide_current_level,
-      algorithm_details_json,
-      notes,
-      snapshot_json
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  )
-    .bind(
-      body.regionTitle,
-      body.snapshot.shore || null,
-      body.snapshot.towns || null,
-      body.snapshot.stationId || null,
-      body.observedAt,
-      now,
-      Number(body.observedScore),
-      Number(body.snapshot.algorithmScore),
-      Number.isFinite(visibilityFt) ? visibilityFt : null,
-      body.snapshot.capturedAt || null,
-      body.snapshot.metrics?.time || null,
-      body.snapshot.metrics?.dateKey || null,
-      Number.isFinite(Number(body.snapshot.metrics?.hour)) ? Number(body.snapshot.metrics.hour) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.waveHeight)) ? Number(body.snapshot.metrics.waveHeight) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.swellHeight)) ? Number(body.snapshot.metrics.swellHeight) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.swellPeriod)) ? Number(body.snapshot.metrics.swellPeriod) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.windWaveHeight)) ? Number(body.snapshot.metrics.windWaveHeight) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.windWavePeriod)) ? Number(body.snapshot.metrics.windWavePeriod) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.temp)) ? Number(body.snapshot.metrics.temp) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.currentSpeed)) ? Number(body.snapshot.metrics.currentSpeed) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.currentDir)) ? Number(body.snapshot.metrics.currentDir) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.tide)) ? Number(body.snapshot.metrics.tide) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.windSpeed)) ? Number(body.snapshot.metrics.windSpeed) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.windDir)) ? Number(body.snapshot.metrics.windDir) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.clouds)) ? Number(body.snapshot.metrics.clouds) : null,
-      Number.isFinite(Number(body.snapshot.metrics?.rain)) ? Number(body.snapshot.metrics.rain) : null,
-      body.snapshot.tide?.tideSummary || null,
-      body.snapshot.tide?.isRising ? 1 : 0,
-      Number.isFinite(Number(body.snapshot.tide?.currentLevel)) ? Number(body.snapshot.tide.currentLevel) : null,
-      JSON.stringify(Array.isArray(body.snapshot.algorithmDetails) ? body.snapshot.algorithmDetails : []),
-      notes || null,
-      JSON.stringify(body.snapshot)
+  try {
+    await env.FEEDBACK_DB.prepare(
+      `INSERT INTO feedback_submissions (
+        region_title,
+        shore,
+        towns,
+        station_id,
+        observed_at,
+        submitted_at,
+        observed_score,
+        algorithm_score,
+        visibility_ft,
+        captured_at,
+        model_time,
+        model_date_key,
+        model_hour,
+        wave_height,
+        swell_height,
+        swell_period,
+        wind_wave_height,
+        wind_wave_period,
+        sea_temp,
+        current_speed,
+        current_dir,
+        tide_height,
+        wind_speed,
+        wind_dir,
+        cloud_cover,
+        rain_inches,
+        tide_summary,
+        tide_is_rising,
+        tide_current_level,
+        algorithm_details_json,
+        notes,
+        snapshot_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .run();
+      .bind(
+        body.regionTitle,
+        body.snapshot.shore || null,
+        body.snapshot.towns || null,
+        body.snapshot.stationId || null,
+        body.observedAt,
+        now,
+        Number(body.observedScore),
+        Number(body.snapshot.algorithmScore),
+        Number.isFinite(visibilityFt) ? visibilityFt : null,
+        body.snapshot.capturedAt || null,
+        body.snapshot.metrics?.time || null,
+        body.snapshot.metrics?.dateKey || null,
+        Number.isFinite(Number(body.snapshot.metrics?.hour)) ? Number(body.snapshot.metrics.hour) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.waveHeight)) ? Number(body.snapshot.metrics.waveHeight) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.swellHeight)) ? Number(body.snapshot.metrics.swellHeight) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.swellPeriod)) ? Number(body.snapshot.metrics.swellPeriod) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.windWaveHeight)) ? Number(body.snapshot.metrics.windWaveHeight) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.windWavePeriod)) ? Number(body.snapshot.metrics.windWavePeriod) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.temp)) ? Number(body.snapshot.metrics.temp) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.currentSpeed)) ? Number(body.snapshot.metrics.currentSpeed) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.currentDir)) ? Number(body.snapshot.metrics.currentDir) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.tide)) ? Number(body.snapshot.metrics.tide) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.windSpeed)) ? Number(body.snapshot.metrics.windSpeed) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.windDir)) ? Number(body.snapshot.metrics.windDir) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.clouds)) ? Number(body.snapshot.metrics.clouds) : null,
+        Number.isFinite(Number(body.snapshot.metrics?.rain)) ? Number(body.snapshot.metrics.rain) : null,
+        body.snapshot.tide?.tideSummary || null,
+        body.snapshot.tide?.isRising ? 1 : 0,
+        Number.isFinite(Number(body.snapshot.tide?.currentLevel)) ? Number(body.snapshot.tide.currentLevel) : null,
+        JSON.stringify(Array.isArray(body.snapshot.algorithmDetails) ? body.snapshot.algorithmDetails : []),
+        notes || null,
+        JSON.stringify(body.snapshot)
+      )
+      .run();
+  } catch (error) {
+    return json(
+      {
+        error: `Database insert failed: ${error instanceof Error ? error.message : String(error)}`
+      },
+      { status: 500 }
+    );
+  }
 
   return json({ ok: true, submittedAt: now }, { status: 201 });
 }
