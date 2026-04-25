@@ -51,7 +51,7 @@ function initializeNavigation() {
   }
 
   initializeMoreMenuDismiss();
-
+  initializeMobileMenu();
   initializeDaylightWarning();
 }
 
@@ -70,6 +70,7 @@ function hydrateNavigation() {
   logoLink.innerHTML = '<img src="assets/snorkeling_turtle_favicon.svg" alt="">';
   nav.appendChild(logoLink);
 
+  // Desktop navigation (hidden on mobile)
   const navCenter = document.createElement('div');
   navCenter.className = 'nav-center-links';
 
@@ -106,6 +107,52 @@ function hydrateNavigation() {
   const spacer = document.createElement('div');
   spacer.className = 'nav-spacer';
   nav.appendChild(spacer);
+
+  // Mobile hamburger button
+  const hamburger = document.createElement('button');
+  hamburger.className = 'nav-hamburger';
+  hamburger.setAttribute('aria-label', 'Open navigation menu');
+  hamburger.setAttribute('aria-expanded', 'false');
+  hamburger.innerHTML = '<span></span><span></span><span></span>';
+  nav.appendChild(hamburger);
+
+  // Create mobile panel
+  let mobilePanel = document.querySelector('.nav-mobile-panel');
+  if (!mobilePanel) {
+    mobilePanel = document.createElement('div');
+    mobilePanel.className = 'nav-mobile-panel';
+    document.body.appendChild(mobilePanel);
+  }
+
+  // Add all links to mobile panel
+  mobilePanel.innerHTML = '';
+  NAV_LINKS.forEach((item) => {
+    const link = document.createElement('a');
+    link.href = item.href;
+    link.textContent = item.label;
+    link.dataset.route = item.route;
+    mobilePanel.appendChild(link);
+  });
+
+  const divider = document.createElement('div');
+  divider.className = 'nav-mobile-divider';
+  mobilePanel.appendChild(divider);
+
+  MORE_LINKS.forEach((item) => {
+    const link = document.createElement('a');
+    link.href = item.href;
+    link.textContent = item.label;
+    link.dataset.route = item.route;
+    mobilePanel.appendChild(link);
+  });
+
+  // Create overlay
+  let overlay = document.querySelector('.nav-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'nav-overlay';
+    document.body.appendChild(overlay);
+  }
 }
 
 function normalizeRoute(value) {
@@ -169,6 +216,58 @@ function initializeMoreMenuDismiss() {
       moreMenu.removeAttribute('open');
     });
   });
+}
+
+function initializeMobileMenu() {
+  const hamburger = document.querySelector('.nav-hamburger');
+  const mobilePanel = document.querySelector('.nav-mobile-panel');
+  const overlay = document.querySelector('.nav-overlay');
+
+  if (!hamburger || !mobilePanel || !overlay) {
+    return;
+  }
+
+  // Toggle menu on hamburger click
+  hamburger.addEventListener('click', () => {
+    const isOpen = mobilePanel.classList.contains('open');
+    if (isOpen) {
+      closeMobileMenu();
+    } else {
+      openMobileMenu();
+    }
+  });
+
+  // Close on overlay click
+  overlay.addEventListener('click', closeMobileMenu);
+
+  // Close on link click
+  const panelLinks = mobilePanel.querySelectorAll('a');
+  panelLinks.forEach((link) => {
+    link.addEventListener('click', closeMobileMenu);
+  });
+
+  // Close on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeMobileMenu();
+    }
+  });
+
+  function openMobileMenu() {
+    mobilePanel.classList.add('open');
+    overlay.classList.add('open');
+    hamburger.classList.add('active');
+    hamburger.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMobileMenu() {
+    mobilePanel.classList.remove('open');
+    overlay.classList.remove('open');
+    hamburger.classList.remove('active');
+    hamburger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
 }
 
 function initializeDaylightWarning() {
