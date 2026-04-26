@@ -1937,6 +1937,10 @@ footer {
   }
 
   .nav-home-logo {
+    position: static;
+    left: auto;
+    top: auto;
+    transform: none;
     flex-shrink: 0;
   }
 
