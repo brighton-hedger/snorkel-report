@@ -1918,6 +1918,10 @@ footer {
     padding: 12px;
   }
 
+  .home-brand-row img {
+    display: none;
+  }
+
   /* Mobile hamburger menu */
   nav {
     display: flex !important;
