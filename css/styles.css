@@ -40,6 +40,7 @@ nav {
   top: 0;
   z-index: 100;
   flex-wrap: wrap;
+  min-height: 78px;
 }
 
 nav a {
@@ -66,7 +67,10 @@ nav a.active {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-right: 8px;
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
   padding: 0;
   background: transparent;
   border-radius: 999px;
@@ -94,6 +98,7 @@ nav a.active {
   gap: 18px;
   flex-wrap: wrap;
   max-width: 100%;
+  margin: 0 auto;
 }
 
 .nav-spacer {
