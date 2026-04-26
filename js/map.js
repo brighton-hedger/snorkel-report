@@ -71,7 +71,7 @@ function buildConditionCards(data) {
     {
       icon: ICONS.sea,
       label: "Sea",
-      value: `${Number.isFinite(data.temp) ? data.temp.toFixed(1) : "--"}°F`
+      value: `${Number.isFinite(data.temp) ? data.temp.toFixed(1) : "--"}&deg;F`
     },
     {
       icon: ICONS.wind,
@@ -92,7 +92,7 @@ function buildConditionCards(data) {
     {
       icon: ICONS.swell,
       label: "Swell",
-      value: `${Number.isFinite(data.swellHeight) ? data.swellHeight.toFixed(1) : "--"} ft${Number.isFinite(data.swellPeriod) && data.swellPeriod > 0 ? ` · ${data.swellPeriod.toFixed(0)}s` : ""}`
+      value: `${Number.isFinite(data.swellHeight) ? data.swellHeight.toFixed(1) : "--"} ft${Number.isFinite(data.swellPeriod) && data.swellPeriod > 0 ? ` &middot; ${data.swellPeriod.toFixed(0)}s` : ""}`
     }
   ];
 
@@ -119,7 +119,7 @@ function buildBestTimeBanner(best) {
         <img src="${ICONS.bestWindow}" alt="" class="map-chip-icon">
         <strong>Next best time</strong>
       </div>
-      <span>${best?.time || "N/A"} · <em style="color:${color};">${best?.score ?? 0}/10</em></span>
+      <span>${best?.time || "N/A"} &middot; <em style="color:${color};">${best?.score ?? 0}/10</em></span>
     </div>
   `;
 }

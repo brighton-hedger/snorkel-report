@@ -149,7 +149,7 @@ function buildConditionChips(metrics, tideData, bestTime, bestScore) {
     chips.push({
       icon: ICONS.sea,
       label: "Sea",
-      value: `${metrics.temp.toFixed(0)}°F`
+      value: `${metrics.temp.toFixed(0)}&deg;F`
     });
   }
 
@@ -172,14 +172,14 @@ function buildConditionChips(metrics, tideData, bestTime, bestScore) {
     chips.push({
       icon: ICONS.swell,
       label: "Swell",
-      value: swellParts.join(" · ")
+      value: swellParts.join(" &middot; ")
     });
   }
 
   chips.push({
     icon: ICONS.bestWindow,
     label: "Next best time",
-    value: `${bestTime} · ${bestScore}/10`
+    value: `${bestTime} &middot; ${bestScore}/10`
   });
 
   if (tideData?.tideSummary && chips.length < 6) {
@@ -488,7 +488,7 @@ function buildSpotCard(result) {
               <span><img src="${ICONS.bestWindow}" alt="" class="chip-icon"></span>
               <strong>Next best time</strong>
             </div>
-            <em>${bestTime} · <span style="color:${bestScoreColor};">${bestScore}/10</span></em>
+            <em>${bestTime} &middot; <span style="color:${bestScoreColor};">${bestScore}/10</span></em>
           </div>
           <div class="condition-chip-row">
             ${chips
@@ -732,4 +732,3 @@ if (document.readyState === "loading") {
 } else {
   initializeReport();
 }
-

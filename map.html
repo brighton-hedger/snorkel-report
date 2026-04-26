@@ -212,9 +212,13 @@
       border-radius: 50%;
       flex: 0 0 auto;
     }
-    @media (max-width: 700px) {
+    @media (max-width: 900px) {
       .map-container {
         padding: 12px;
+      }
+      .leaflet-control.legend,
+      .legend {
+        display: none;
       }
       #map {
         height: 470px;
@@ -271,7 +275,7 @@
   <div class="container">
     <div class="map-container">
       <div class="map-header">
-        <h1>Oʻahu Snorkel Regions</h1>
+        <h1>Oahu Snorkel Regions</h1>
         <p>Interactive map showing all snorkel regions with current conditions</p>
       </div>
       <div id="map"></div>

@@ -8,6 +8,52 @@ function json(data, init = {}) {
   });
 }
 
+const ROUTE_FILE_MAP = {
+  "/": "/index.html",
+  "/about": "/about.html",
+  "/blog": "/blog.html",
+  "/blog/read-the-score": "/blog-read-score.html",
+  "/blog/tide-matters": "/blog-tide.html",
+  "/blog/wind-swell-visibility": "/blog-wind-swell-visibility.html",
+  "/day-forecast": "/day-forecast.html",
+  "/detailed-reports": "/detailed-reports.html",
+  "/feedback": "/feedback.html",
+  "/haleiwa": "/haleiwa.html",
+  "/hawaii-kai": "/hawaii-kai.html",
+  "/kaneohe-bay": "/kaneohe-bay.html",
+  "/ko-olina": "/ko-olina.html",
+  "/lanikai-kailua": "/lanikai-kailua.html",
+  "/live-report": "/live-report.html",
+  "/map": "/map.html",
+  "/nanakuli": "/nanakuli.html",
+  "/pokai-bay": "/pokai-bay.html",
+  "/pupukea": "/pupukea.html",
+  "/search": "/search.html",
+  "/waikiki": "/waikiki.html",
+  "/waimanalo": "/waimanalo.html",
+  "/waimea-bay": "/waimea-bay.html",
+  "/week-forecast": "/week-forecast.html",
+  "/ala-moana": "/ala-moana.html"
+};
+
+const FILE_ROUTE_MAP = Object.fromEntries(
+  Object.entries(ROUTE_FILE_MAP).map(([route, file]) => [file, route])
+);
+
+function injectSeoScript(html) {
+  if (html.includes('/js/seo.js')) {
+    return html;
+  }
+
+  return html.replace("</body>", '  <script src="/js/seo.js"></script>\n</body>');
+}
+
+function withPath(url, pathname) {
+  const nextUrl = new URL(url.toString());
+  nextUrl.pathname = pathname;
+  return nextUrl;
+}
+
 function validateFeedback(body) {
   if (!body || typeof body !== "object") {
     return "Invalid request body.";
@@ -186,6 +232,31 @@ export default {
       });
     }
 
-    return env.ASSETS.fetch(request);
+    const redirectPath = FILE_ROUTE_MAP[url.pathname];
+    if (redirectPath) {
+      return Response.redirect(withPath(url, redirectPath).toString(), 301);
+    }
+
+    const assetPath = ROUTE_FILE_MAP[url.pathname];
+    const assetRequest = assetPath
+      ? new Request(withPath(url, assetPath), request)
+      : request;
+
+    const response = await env.ASSETS.fetch(assetRequest);
+    const contentType = response.headers.get("Content-Type") || "";
+
+    if (!contentType.includes("text/html")) {
+      return response;
+    }
+
+    const html = injectSeoScript(await response.text());
+    const headers = new Headers(response.headers);
+    headers.set("Content-Type", "text/html; charset=utf-8");
+
+    return new Response(html, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
   }
 };

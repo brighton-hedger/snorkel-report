@@ -1,158 +1,120 @@
-# Oʻahu Snorkel Report Website
+# Oahu Snorkel Report
 
-A fully functional Hawaiian snorkel report website featuring real-time ocean and weather conditions across six regions of Oʻahu.
+Oahu Snorkel Report is a shore-by-shore snorkeling conditions project for Oahu. The repo contains the front-end site, shared scoring logic, region pages, map view, forecast pages, and feedback flow used to present daily snorkeling conditions around the island.
 
-## Features
+## What the Project Does
 
-- **Snorkel Report Page**: Current conditions and snorkel scores for all six regions
-- **Day Forecast**: 3-day hourly forecast with interactive charts using Chart.js
-- **Week Forecast**: 7-day overview table with daily average scores
-- **Real-time Data**: Fetches live marine and weather data from Open-Meteo API
-- **Tide Information**: Integration with NOAA tide predictions
-- **Responsive Design**: Mobile-friendly layout that adapts to all screen sizes
+- Shows live snorkeling condition scores across Oahu shore regions
+- Breaks conditions down by East, South, North, and West shore spots
+- Includes standalone region pages with summaries, charts, and outlooks
+- Provides day and week forecast views
+- Includes an interactive map with region popups
+- Lets users submit field feedback for comparison against the live model
 
-## Project Structure
+## Main Pages
 
-```
-snorkel-report/
-├── index.html              # Main snorkel report page
-├── day-forecast.html       # Day forecast with charts
-├── week-forecast.html      # Week forecast table
-├── css/
-│   └── styles.css         # All styling (responsive design)
-├── js/
-│   ├── navigation.js       # Navigation and page switching
-│   ├── report.js           # Main snorkel report logic
-│   ├── day-forecast.js     # Day forecast chart generation
-│   └── week-forecast.js    # Week forecast table population
-└── README.md               # This file
-```
+- `index.html` - homepage
+- `live-report.html` - live shore-by-shore report
+- `day-forecast.html` - short-range daylight forecast charts
+- `week-forecast.html` - 7-day outlook table
+- `map.html` - interactive map view
+- `detailed-reports.html` - region directory
+- `search.html` - region/date search page
+- `feedback.html` - field feedback form
+- `about.html` - methodology and project background
+- `blog.html` - supporting articles
 
 ## Regions Covered
 
-1. **Windward East** - Kailua, Waimānalo, Makapuʻu
-2. **South Shore** - Waikīkī, Ala Moana, Kewalo
-3. **North Shore** - Haleʻiwa, Waimea, Pūpūkea
-4. **West Shore** - ʻEwa, Ko ʻOlina, Electric Beach
-5. **South East Shore** - Koko Head, Hawaiʻi Kai, Hanauma Bay
-6. **Windward North** - Kāneʻohe, Kahaluʻu, Heʻeia
+- `lanikai-kailua`
+- `waimanalo`
+- `kaneohe-bay`
+- `waikiki`
+- `ala-moana`
+- `hawaii-kai`
+- `haleiwa`
+- `waimea-bay`
+- `pupukea`
+- `ko-olina`
+- `pokai-bay`
+- `nanakuli`
 
-## Running the Website
+## Tech Stack
 
-### Option 1: Using Python (Recommended)
+- HTML
+- CSS
+- JavaScript
+- Chart.js
+- Leaflet
+- Open-Meteo data
+- NOAA tide data
+
+## Repo Structure
+
+```text
+snorkel-report/
+|-- assets/                  # Icons, favicon, and shared images
+|-- css/
+|   `-- styles.css           # Shared site styles
+|-- js/
+|   |-- day-forecast.js
+|   |-- feedback.js
+|   |-- map.js
+|   |-- navigation.js
+|   |-- region-report.js
+|   |-- report.js
+|   |-- search.js
+|   |-- seo.js
+|   |-- snorkel-shared.js
+|   `-- week-forecast.js
+|-- *.html                   # Site pages and region pages
+|-- schema.sql               # Feedback database schema
+|-- worker.js                # Request handling and API entry point
+|-- wrangler.jsonc           # Worker config
+|-- README.md
+`-- SETUP.md
+```
+
+## Local Development
+
+Run a local server from the project root:
 
 ```bash
-# Python 3
 python -m http.server 8000
-
-# Python 2
-python -m SimpleHTTPServer 8000
 ```
 
-Then open [http://localhost:8000](http://localhost:8000) in your browser.
+Then open `http://localhost:8000`.
 
-### Option 2: Using Node.js
-
-```bash
-# Install global-http-server (one time)
-npm install -g global-http-server
-
-# Run in the project directory
-ghs
-```
-
-### Option 3: Using Live Server Extension in VS Code
-
-1. Install the "Live Server" extension by Ritwick Dey
-2. Right-click `index.html` and select "Open with Live Server"
-
-### Option 4: Direct File Access
-
-Simply open `index.html` in your browser:
-```
-file:///path/to/snorkel-report/index.html
-```
+You can also use a local static server such as VS Code Live Server.
 
 ## Data Sources
 
-- **Marine Data**: [Open-Meteo Marine API](https://open-meteo.com/en/docs/marine-weather-api)
-- **Weather Data**: [Open-Meteo Weather API](https://open-meteo.com/en/docs/forecast-api)
-- **Tide Data**: [NOAA Tides & Currents](https://tidesandcurrents.noaa.gov/api/)
+- Open-Meteo Marine API
+- Open-Meteo Forecast API
+- NOAA Tides & Currents API
 
-## Scoring Algorithm
+## Scoring Model
 
-The snorkel score (1-10) is calculated based on:
+The snorkel score is a region-aware heuristic on a `1-10` scale. It uses a mix of:
 
-- Wave height (< 5ft is ideal)
-- Swell conditions (< 3ft preferred)
-- Swell period (6-12s is optimal)
-- Wind wave height (< 3ft is good)
-- Ocean currents (< 1.5 mph preferred)
-- Cloud cover (< 60% for visibility)
-- Precipitation (minimal rain)
-- Tide conditions
+- wave height
+- swell height and period
+- wind wave height
+- wind speed and direction
+- current speed and direction
+- tide level
+- cloud cover
+- rain
+- shoreline exposure and protection
 
-## Browser Support
+Most of the shared scoring and region configuration lives in `js/snorkel-shared.js`.
 
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-- Mobile browsers
+## Notes
 
-## Customization
-
-### Adding New Regions
-
-Edit the `regions` array in the respective JavaScript files:
-
-```javascript
-const regions = [
-  { title: "Region Name", towns: "(Town 1, Town 2)", lat: 21.3300, lng: -157.6700 },
-  // Add more regions...
-];
-```
-
-### Styling
-
-All CSS is contained in `css/styles.css`. Key color variables:
-- Primary: `#2aa198` (teal)
-- Background: `#e0f7f4` (light teal)
-- Good Score: `#1eaa5a` (green)
-- Medium Score: `#e6a800` (orange)
-- Poor Score: `#cc3300` (red)
-
-### API Keys
-
-Currently, no API keys are required. Open-Meteo provides free data without authentication.
-
-## Error Handling
-
-- API call failures are caught and logged
-- User-friendly error messages are displayed if data fails to load
-- Page continues to function even if some API calls fail
-
-## Performance Optimizations
-
-- Lazy loading of data per region
-- Efficient chart rendering using Chart.js
-- Responsive-first design
-- Minimal HTTP requests
-
-## Future Enhancements
-
-- [ ] Local storage for cached data
-- [ ] Offline mode support
-- [ ] Water temperature alerts
-- [ ] Photo gallery for each region
-- [ ] User reviews and ratings
-- [ ] Mobile app version
-- [ ] Historical data and trends
-- [ ] SMS/Email alerts for optimal conditions
+- Live conditions depend on third-party API availability
+- The project mixes static page templates with shared client-side rendering
+- Feedback storage depends on the configured backend environment
 
 ## License
 
-Personal project by Brighton Hedger
-
-## Questions or Issues?
-
-For bugs or feature requests, please open an issue or contact the developer.
+MIT
