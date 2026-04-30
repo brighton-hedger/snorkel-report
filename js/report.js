@@ -2,10 +2,13 @@ const {
   REGIONS,
   fetchForecast,
   fetchTide,
+  fetchActiveAdvisories,
   calculateRegionalScore,
   findBestSnorkelTime,
   getScoreColor,
-  toCardinal
+  toCardinal,
+  getRegionAdvisories,
+  escapeHtml
 } = window.SnorkelShared;
 
 const SHORE_ORDER = ["East", "South", "North", "West"];
@@ -29,6 +32,61 @@ const ICONS = {
   tide: "assets/tide_emoji.svg"
 };
 const REGION_ORDER_INDEX = new Map(REGIONS.map((region, index) => [region.title, index]));
+
+function formatAdvisoryTime(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function buildBrownWaterWarningsMarkup(advisories, compact = false) {
+  if (!advisories?.length) {
+    return "";
+  }
+
+  return `
+    <div class="water-quality-warning-list${compact ? " water-quality-warning-list-compact" : ""}">
+      ${advisories.map((advisory) => {
+        const cause = advisory.cause ? escapeHtml(advisory.cause.replace(/_/g, " ")) : "Brown water";
+        const headline = escapeHtml(advisory.headline || "Brown water advisory");
+        const timing = advisory.expires_at
+          ? `Active through ${escapeHtml(formatAdvisoryTime(advisory.expires_at))}`
+          : advisory.issued_at
+            ? `Posted ${escapeHtml(formatAdvisoryTime(advisory.issued_at))}`
+            : "";
+        const source = advisory.source_url
+          ? `<a href="${escapeHtml(advisory.source_url)}" target="_blank" rel="noreferrer">${escapeHtml(advisory.source_name || "Source")}</a>`
+          : advisory.source_name
+            ? `<span>${escapeHtml(advisory.source_name)}</span>`
+            : "";
+        const meta = [timing, source].filter(Boolean).join(" | ");
+
+        return `
+          <section class="water-quality-warning${compact ? " water-quality-warning-compact" : ""}">
+            <div class="water-quality-warning-head">
+              <strong>Brown Water Advisory</strong>
+              <span>${cause}</span>
+            </div>
+            <p>${headline}</p>
+            ${meta ? `<div class="water-quality-warning-meta">${meta}</div>` : ""}
+          </section>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
 
 function getSafeMetrics(metrics) {
   return {
@@ -453,11 +511,12 @@ function buildTideChart(tideData) {
 }
 
 function buildSpotCard(result) {
-  const { region, score, bestTime, bestScore, metrics, tideData, conditionBreakdown } = result;
+  const { region, score, bestTime, bestScore, metrics, tideData, conditionBreakdown, advisories } = result;
   const scoreColor = getScoreColor(score);
   const bestScoreColor = getScoreColor(bestScore);
   const protectedBadge = region.protected ? '<span class="protected-badge">Protected</span>' : "";
   const chips = buildConditionChips(metrics, tideData, bestTime, bestScore);
+  const warningMarkup = buildBrownWaterWarningsMarkup(advisories, true);
   const goodList = (conditionBreakdown?.good?.length
     ? conditionBreakdown.good
     : ["A few signals are neutral right now, so this spot is not getting major help from the conditions."])
@@ -490,6 +549,7 @@ function buildSpotCard(result) {
             </div>
             <em>${bestTime} &middot; <span style="color:${bestScoreColor};">${bestScore}/10</span></em>
           </div>
+          ${warningMarkup}
           <div class="condition-chip-row">
             ${chips
               .map(
@@ -520,6 +580,7 @@ function buildSpotCard(result) {
             <div class="spot-score-pill" style="color:${scoreColor}; border-color:${scoreColor};">${score}/10</div>
           </div>
           <div class="condition-breakdown">
+            ${warningMarkup}
             <section class="condition-breakdown-panel condition-breakdown-good">
               <h4>What is making snorkeling conditions good</h4>
               <ul>${goodList}</ul>
@@ -572,11 +633,12 @@ function buildFallbackResult(region) {
     bestScore: 0,
     metrics: getSafeMetrics(null),
     tideData: { tideSummary: null, isRising: false, predictions: [], currentLevel: null },
-    conditionBreakdown: { good: [], bad: [] }
+    conditionBreakdown: { good: [], bad: [] },
+    advisories: []
   };
 }
 
-async function loadRegionResult(region) {
+async function loadRegionResult(region, advisories) {
   try {
     const [forecast, tideData] = await Promise.all([
       fetchForecast(region, { forecastHours: 24 }),
@@ -593,7 +655,8 @@ async function loadRegionResult(region) {
       bestScore: best.score,
       metrics: safeMetrics,
       tideData,
-      conditionBreakdown: buildConditionBreakdown(safeMetrics, region, tideData, scoreResult.details)
+      conditionBreakdown: buildConditionBreakdown(safeMetrics, region, tideData, scoreResult.details),
+      advisories: getRegionAdvisories(advisories, region)
     };
   } catch (error) {
     console.error(`Error loading region ${region.title}:`, error);
@@ -698,11 +761,12 @@ async function initializeReport() {
   }
 
   try {
+    const advisories = await fetchActiveAdvisories();
     const resultMap = new Map();
 
     await Promise.all(
       REGIONS.map(async (region) => {
-        const result = await loadRegionResult(region);
+        const result = await loadRegionResult(region, advisories);
         resultMap.set(region.title, result);
 
         const orderedResults = getCompletedShoreResults(resultMap);

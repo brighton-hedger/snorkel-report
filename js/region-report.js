@@ -2,13 +2,16 @@ const {
   REGIONS,
   fetchForecast,
   fetchTide,
+  fetchActiveAdvisories,
   calculateRegionalScore,
   findBestSnorkelTime,
   getDaylightScoreSeries,
   getDaylightAverageScore,
   getScoreColor,
   toCardinal,
-  getDateKey
+  getDateKey,
+  getRegionAdvisories,
+  escapeHtml
 } = window.SnorkelShared;
 
 const DAY_FORECAST_DAYS = 3;
@@ -25,6 +28,61 @@ const ICONS = {
   bestWindow: "assets/best_time_emoji.svg",
   tide: "assets/tide_emoji.svg"
 };
+
+function formatAdvisoryTime(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function buildBrownWaterWarningsMarkup(advisories) {
+  if (!advisories?.length) {
+    return "";
+  }
+
+  return `
+    <div class="water-quality-warning-list">
+      ${advisories.map((advisory) => {
+        const cause = advisory.cause ? escapeHtml(advisory.cause.replace(/_/g, " ")) : "Brown water";
+        const headline = escapeHtml(advisory.headline || "Brown water advisory");
+        const timing = advisory.expires_at
+          ? `Active through ${escapeHtml(formatAdvisoryTime(advisory.expires_at))}`
+          : advisory.issued_at
+            ? `Posted ${escapeHtml(formatAdvisoryTime(advisory.issued_at))}`
+            : "";
+        const source = advisory.source_url
+          ? `<a href="${escapeHtml(advisory.source_url)}" target="_blank" rel="noreferrer">${escapeHtml(advisory.source_name || "Source")}</a>`
+          : advisory.source_name
+            ? `<span>${escapeHtml(advisory.source_name)}</span>`
+            : "";
+        const meta = [timing, source].filter(Boolean).join(" | ");
+
+        return `
+          <section class="water-quality-warning">
+            <div class="water-quality-warning-head">
+              <strong>Brown Water Advisory</strong>
+              <span>${cause}</span>
+            </div>
+            <p>${headline}</p>
+            ${meta ? `<div class="water-quality-warning-meta">${meta}</div>` : ""}
+          </section>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
 
 const REGION_SLUGS = {
   "lanikai-kailua": "Lanikai/Kailua",
@@ -421,9 +479,10 @@ async function loadRegionPage() {
   }
 
   try {
-    const [forecast, tideData] = await Promise.all([
+    const [forecast, tideData, allAdvisories] = await Promise.all([
       fetchForecast(region, { forecastDays: WEEK_FORECAST_DAYS }),
-      fetchTide(region.stationId)
+      fetchTide(region.stationId),
+      fetchActiveAdvisories()
     ]);
 
     const metrics = getSafeMetrics(forecast.current);
@@ -446,6 +505,7 @@ async function loadRegionPage() {
       time: entry.time,
       score: entry.score
     }));
+    const advisories = getRegionAdvisories(allAdvisories, region);
     const weekScores = buildDayDescriptors(WEEK_FORECAST_DAYS).map((day) =>
       getDaylightAverageScore(forecast.hourly || [], region, day.dateKey)
     );
@@ -465,6 +525,7 @@ async function loadRegionPage() {
 
       <section class="content-card">
         <h2>Live Conditions</h2>
+        ${buildBrownWaterWarningsMarkup(advisories)}
         <div class="region-metrics-grid">
           ${buildCurrentMetricsMarkup(metrics, tideData, bestTime)}
         </div>

@@ -1,4 +1,15 @@
-const { REGIONS, fetchForecast, fetchTide, calculateRegionalScore, findBestSnorkelTime, getScoreColor, toCardinal } = window.SnorkelShared;
+const {
+  REGIONS,
+  fetchForecast,
+  fetchTide,
+  fetchActiveAdvisories,
+  calculateRegionalScore,
+  findBestSnorkelTime,
+  getScoreColor,
+  toCardinal,
+  getRegionAdvisories,
+  escapeHtml
+} = window.SnorkelShared;
 
 const TIDE_CHART_WIDTH = 320;
 const TIDE_CHART_HEIGHT = 210;
@@ -18,6 +29,61 @@ const ICONS = {
   bestWindow: "assets/best_time_emoji.svg",
   tide: "assets/tide_emoji.svg"
 };
+
+function formatAdvisoryTime(value) {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function buildBrownWaterWarningsMarkup(advisories) {
+  if (!advisories?.length) {
+    return "";
+  }
+
+  return `
+    <div class="water-quality-warning-list water-quality-warning-list-compact">
+      ${advisories.map((advisory) => {
+        const cause = advisory.cause ? escapeHtml(advisory.cause.replace(/_/g, " ")) : "Brown water";
+        const headline = escapeHtml(advisory.headline || "Brown water advisory");
+        const timing = advisory.expires_at
+          ? `Active through ${escapeHtml(formatAdvisoryTime(advisory.expires_at))}`
+          : advisory.issued_at
+            ? `Posted ${escapeHtml(formatAdvisoryTime(advisory.issued_at))}`
+            : "";
+        const source = advisory.source_url
+          ? `<a href="${escapeHtml(advisory.source_url)}" target="_blank" rel="noreferrer">${escapeHtml(advisory.source_name || "Source")}</a>`
+          : advisory.source_name
+            ? `<span>${escapeHtml(advisory.source_name)}</span>`
+            : "";
+        const meta = [timing, source].filter(Boolean).join(" | ");
+
+        return `
+          <section class="water-quality-warning water-quality-warning-compact">
+            <div class="water-quality-warning-head">
+              <strong>Brown Water Advisory</strong>
+              <span>${cause}</span>
+            </div>
+            <p>${headline}</p>
+            ${meta ? `<div class="water-quality-warning-meta">${meta}</div>` : ""}
+          </section>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
 
 function formatClock(value) {
   return new Date(value).toLocaleTimeString([], {
@@ -162,7 +228,7 @@ function bindPopupToggles(map) {
   });
 }
 
-function addRegionMarker(map, createMarkerIcon, region, score, data, tideData, best) {
+function addRegionMarker(map, createMarkerIcon, region, score, data, tideData, best, advisories) {
   const color = getScoreColor(score);
   const popupContent = `
     <div class="region-popup">
@@ -174,6 +240,7 @@ function addRegionMarker(map, createMarkerIcon, region, score, data, tideData, b
         <div class="score" style="color:${color}; border-color:${color};">${score}/10</div>
       </div>
       ${buildBestTimeBanner(best)}
+      ${buildBrownWaterWarningsMarkup(advisories)}
       <div class="map-popup-grid">
         ${buildConditionCards(data)}
       </div>
@@ -189,7 +256,7 @@ function addRegionMarker(map, createMarkerIcon, region, score, data, tideData, b
     .addTo(map);
 }
 
-function initializeMap() {
+async function initializeMap() {
   const map = L.map("map").setView([21.4389, -157.9561], 10);
 
   L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
@@ -221,6 +288,8 @@ function initializeMap() {
     });
   };
 
+  const advisories = await fetchActiveAdvisories();
+
   REGIONS.forEach(async (region) => {
     try {
       const [forecast, tideData] = await Promise.all([
@@ -229,10 +298,10 @@ function initializeMap() {
       ]);
       const score = calculateRegionalScore(forecast.current, region);
       const best = findBestSnorkelTime(forecast.hourly || [], region);
-      addRegionMarker(map, createMarkerIcon, region, score, forecast.current, tideData, best);
+      addRegionMarker(map, createMarkerIcon, region, score, forecast.current, tideData, best, getRegionAdvisories(advisories, region));
     } catch (error) {
       console.error(`Error fetching data for ${region.title}:`, error);
-      addRegionMarker(map, createMarkerIcon, region, 0, null, null, { time: "N/A", score: 0 });
+      addRegionMarker(map, createMarkerIcon, region, 0, null, null, { time: "N/A", score: 0 }, getRegionAdvisories(advisories, region));
     }
   });
 
