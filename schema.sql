@@ -39,3 +39,34 @@ ON feedback_submissions (submitted_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_feedback_region_title
 ON feedback_submissions (region_title);
+
+CREATE TABLE IF NOT EXISTS water_quality_advisories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  advisory_type TEXT NOT NULL DEFAULT 'brown_water',
+  status TEXT NOT NULL DEFAULT 'active',
+  region_title TEXT,
+  shore TEXT,
+  headline TEXT NOT NULL,
+  details TEXT,
+  cause TEXT,
+  source_name TEXT,
+  source_url TEXT,
+  issued_at TEXT,
+  starts_at TEXT,
+  expires_at TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (region_title IS NOT NULL OR shore IS NOT NULL)
+);
+
+CREATE INDEX IF NOT EXISTS idx_water_quality_advisories_active_window
+ON water_quality_advisories (advisory_type, status, starts_at, expires_at);
+
+CREATE INDEX IF NOT EXISTS idx_water_quality_advisories_region
+ON water_quality_advisories (region_title);
+
+CREATE INDEX IF NOT EXISTS idx_water_quality_advisories_shore
+ON water_quality_advisories (shore);
+
+CREATE INDEX IF NOT EXISTS idx_water_quality_advisories_source_name
+ON water_quality_advisories (source_name);

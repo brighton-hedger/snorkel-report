@@ -19,6 +19,7 @@ const TIDE_CHART_PAD_TOP = 42;
 const TIDE_CHART_PAD_BOTTOM = 48;
 const DAYLIGHT_START_HOUR = 6;
 const DAYLIGHT_END_HOUR = 18;
+const NO_BETTER_TIME_LABEL = "Best right now";
 const ICONS = {
   wind: "assets/wind_emoji.svg",
   waves: "assets/wave_emoji.svg",
@@ -237,7 +238,7 @@ function buildConditionChips(metrics, tideData, bestTime, bestScore) {
   chips.push({
     icon: ICONS.bestWindow,
     label: "Next best time",
-    value: `${bestTime} &middot; ${bestScore}/10`
+    value: bestTime === NO_BETTER_TIME_LABEL ? bestTime : `${bestTime} &middot; ${bestScore}/10`
   });
 
   if (tideData?.tideSummary && chips.length < 6) {
@@ -547,7 +548,11 @@ function buildSpotCard(result) {
               <span><img src="${ICONS.bestWindow}" alt="" class="chip-icon"></span>
               <strong>Next best time</strong>
             </div>
-            <em>${bestTime} &middot; <span style="color:${bestScoreColor};">${bestScore}/10</span></em>
+            <em>${
+              bestTime === NO_BETTER_TIME_LABEL
+                ? bestTime
+                : `${bestTime} &middot; <span style="color:${bestScoreColor};">${bestScore}/10</span>`
+            }</em>
           </div>
           ${warningMarkup}
           <div class="condition-chip-row">

@@ -6,6 +6,9 @@
   "assets": {
     "directory": "."
   },
+  "triggers": {
+    "crons": ["*/30 * * * *"]
+  },
   "d1_databases": [
     {
       "binding": "FEEDBACK_DB",

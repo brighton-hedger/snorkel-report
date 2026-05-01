@@ -175,6 +175,76 @@ nav a.active {
   color: #7a5b00;
 }
 
+.water-quality-warning-list {
+  display: grid;
+  gap: 10px;
+}
+
+.water-quality-warning-list-compact {
+  gap: 8px;
+}
+
+.water-quality-warning {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff3e7;
+  border: 1px solid #e2b47e;
+  color: #6e3f11;
+  box-shadow: 0 2px 8px rgba(110, 63, 17, 0.08);
+}
+
+.water-quality-warning-compact {
+  padding: 10px 12px;
+}
+
+.water-quality-warning-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.water-quality-warning-head strong {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a4b12;
+}
+
+.water-quality-warning-head span {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a55c17;
+}
+
+.water-quality-warning p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.water-quality-warning p + p {
+  margin-top: 6px;
+}
+
+.water-quality-warning-meta {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #875427;
+}
+
+.water-quality-warning-meta a {
+  color: inherit;
+  font-weight: 600;
+}
+
+.best-window-banner + .water-quality-warning-list,
+.map-best-window-banner + .water-quality-warning-list {
+  margin-top: 8px;
+}
+
 /* Main Container */
 .container {
   max-width: 1440px;

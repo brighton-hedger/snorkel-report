@@ -247,6 +247,15 @@
     return response.json();
   }
 
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   function buildForecastUrls(region, options = {}) {
     const { forecastHours, forecastDays } = options;
     const rangeParam = forecastDays
@@ -360,6 +369,30 @@
       console.error("Tide error:", error);
       return { tideSummary: null, isRising: false, predictions: [], curvePredictions: [], currentLevel: null };
     }
+  }
+
+  async function fetchActiveAdvisories(type = "brown_water") {
+    try {
+      const data = await fetchJson(`/api/advisories?type=${encodeURIComponent(type)}`);
+      return Array.isArray(data?.items) ? data.items : [];
+    } catch (error) {
+      console.error("Advisory error:", error);
+      return [];
+    }
+  }
+
+  function getRegionAdvisories(advisories, region) {
+    if (!Array.isArray(advisories) || !region) {
+      return [];
+    }
+
+    return advisories.filter((advisory) => {
+      if (advisory.region_title && advisory.region_title === region.title) {
+        return true;
+      }
+
+      return !advisory.region_title && advisory.shore && advisory.shore === region.shore;
+    });
   }
 
   function scoreDirectionalShelter(flowDegrees, shelteredDirections, curvatureFactor) {
@@ -591,7 +624,7 @@
     }
 
     return {
-      time: "Now",
+      time: "Best right now",
       score: currentScore
     };
   }
@@ -627,10 +660,13 @@
     fetchJson,
     fetchForecast,
     fetchTide,
+    fetchActiveAdvisories,
     calculateRegionalScore,
     findBestSnorkelTime,
     getDaylightScoreSeries,
     getDaylightAverageScore,
-    getRegionByTitle
+    getRegionByTitle,
+    getRegionAdvisories,
+    escapeHtml
   };
 })(window);

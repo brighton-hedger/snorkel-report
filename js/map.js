@@ -16,6 +16,7 @@ const TIDE_CHART_HEIGHT = 210;
 const TIDE_CHART_PAD_X = 18;
 const TIDE_CHART_PAD_TOP = 42;
 const TIDE_CHART_PAD_BOTTOM = 48;
+const NO_BETTER_TIME_LABEL = "Best right now";
 
 const ICONS = {
   wind: "assets/wind_emoji.svg",
@@ -179,13 +180,16 @@ function buildConditionCards(data) {
 
 function buildBestTimeBanner(best) {
   const color = getScoreColor(best?.score ?? 0);
+  const bestTimeMarkup = best?.time === NO_BETTER_TIME_LABEL
+    ? best.time
+    : `${best?.time || "N/A"} &middot; <em style="color:${color};">${best?.score ?? 0}/10</em>`;
   return `
     <div class="map-best-window-banner">
       <div class="map-best-window-head">
         <img src="${ICONS.bestWindow}" alt="" class="map-chip-icon">
         <strong>Next best time</strong>
       </div>
-      <span>${best?.time || "N/A"} &middot; <em style="color:${color};">${best?.score ?? 0}/10</em></span>
+      <span>${bestTimeMarkup}</span>
     </div>
   `;
 }

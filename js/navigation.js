@@ -57,7 +57,9 @@ function initializeNavigation() {
 
   initializeMoreMenuDismiss();
   initializeMobileMenu();
-  initializeDaylightWarning();
+  if (currentPage === 'live-report') {
+    initializeDaylightWarning();
+  }
 }
 
 function hydrateNavigation() {

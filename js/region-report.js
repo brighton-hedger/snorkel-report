@@ -16,6 +16,7 @@ const {
 
 const DAY_FORECAST_DAYS = 3;
 const WEEK_FORECAST_DAYS = 7;
+const NO_BETTER_TIME_LABEL = "Best right now";
 const ICONS = {
   wind: "assets/wind_emoji.svg",
   waves: "assets/wave_emoji.svg",
@@ -81,6 +82,32 @@ function buildBrownWaterWarningsMarkup(advisories) {
         `;
       }).join("")}
     </div>
+  `;
+}
+
+function buildRegionOverviewMarkup(region, advisories) {
+  const advisorySentence = advisories.length
+    ? `The page also surfaces any active brown water or water quality posting that maps to ${region.title}.`
+    : `Brown water or water quality advisories will appear here automatically when an official posting maps to ${region.title}.`;
+
+  return `
+    <p>
+      This detailed ${region.title} snorkel report is meant for trip planning as much as it is for a quick score check. It combines live marine forecast inputs with tide context to explain how this Oahu shoreline is behaving today.
+    </p>
+    <p>
+      ${region.title} covers ${region.towns} on the ${region.shore.toLowerCase()} shore, so the same island-wide weather can still produce different snorkeling quality here than it does on other parts of Oahu. ${advisorySentence}
+    </p>
+  `;
+}
+
+function buildRegionPlanningMarkup(region) {
+  return `
+    <p>
+      Use the live score for the immediate snapshot, the written summary for context, the 3 day graphs to spot short-term swings, and the 7 day outlook to compare whether this region is trending better or worse than the rest of the island.
+    </p>
+    <p>
+      Because reef depth, shoreline angle, and exposure change from coast to coast, this page is best used alongside the island live report and the detailed reports hub when you are deciding where to snorkel on Oahu.
+    </p>
   `;
 }
 
@@ -292,8 +319,11 @@ function createMetricMarkup(icon, label, value) {
 function buildCurrentMetricsMarkup(metrics, tideData, bestTime) {
   const weatherChip = getWeatherChip(metrics);
   const bestScoreColor = getScoreColor(bestTime.score);
+  const bestTimeValue = bestTime.time === NO_BETTER_TIME_LABEL
+    ? bestTime.time
+    : `${bestTime.time} | <strong style="color:${bestScoreColor};">${bestTime.score}/10</strong>`;
   return [
-    createMetricMarkup(ICONS.bestWindow, "Next best time", `${bestTime.time} | <strong style="color:${bestScoreColor};">${bestTime.score}/10</strong>`),
+    createMetricMarkup(ICONS.bestWindow, "Next best time", bestTimeValue),
     createMetricMarkup(ICONS.sea, "Sea", Number.isFinite(metrics.temp) ? `${metrics.temp.toFixed(1)}&deg;F` : "--"),
     createMetricMarkup(ICONS.wind, "Wind", `${Number.isFinite(metrics.windSpeed) ? metrics.windSpeed.toFixed(1) : "--"} mph ${toCardinal(metrics.windDir)}`),
     createMetricMarkup(ICONS.waves, "Waves", `${Number.isFinite(metrics.waveHeight) ? metrics.waveHeight.toFixed(1) : "--"} ft`),
@@ -418,9 +448,13 @@ function buildNarrative(region, metrics, bestTime, daySeries, breakdown) {
     trendSentence = `Conditions look fairly steady through the daylight window, holding around <strong style="color:${startColor};">${start.score.toFixed(1)}/10</strong> to <strong style="color:${endColor};">${end.score.toFixed(1)}/10</strong>.`;
   }
 
+  const bestTimeSentence = bestTime.time === NO_BETTER_TIME_LABEL
+    ? "Current conditions appear to be the best remaining daylight window today."
+    : `The best daylight window currently looks to be around <strong>${bestTime.time}</strong>, with a peak score near <strong style="color:${peakColor};">${best.score.toFixed(1)}/10</strong>.`;
+
   return `
     <p>${region.title} is currently scoring <strong style="color:${scoreColor};">${currentScore.toFixed(1)}/10</strong>. ${positives} ${negatives}</p>
-    <p>${trendSentence}${trendDriver ? ` ${trendDriver}` : ""} The best daylight window currently looks to be around <strong>${bestTime.time}</strong>, with a peak score near <strong style="color:${peakColor};">${best.score.toFixed(1)}/10</strong>.</p>
+    <p>${trendSentence}${trendDriver ? ` ${trendDriver}` : ""} ${bestTimeSentence}</p>
   `;
 }
 
@@ -524,6 +558,13 @@ async function loadRegionPage() {
       </section>
 
       <section class="content-card">
+        <h2>About This ${region.title} Report</h2>
+        <div class="region-summary-copy">
+          ${buildRegionOverviewMarkup(region, advisories)}
+        </div>
+      </section>
+
+      <section class="content-card">
         <h2>Live Conditions</h2>
         ${buildBrownWaterWarningsMarkup(advisories)}
         <div class="region-metrics-grid">
@@ -545,6 +586,13 @@ async function loadRegionPage() {
             <h4>What is hurting</h4>
             <ul>${(breakdown.bad.length ? breakdown.bad : ["No major warning flags are dominating the forecast right now."]).map((item) => `<li>${item}</li>`).join("")}</ul>
           </section>
+        </div>
+      </section>
+
+      <section class="content-card">
+        <h2>How To Use This Forecast</h2>
+        <div class="region-summary-copy">
+          ${buildRegionPlanningMarkup(region)}
         </div>
       </section>
 
