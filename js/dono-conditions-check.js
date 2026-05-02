@@ -243,6 +243,7 @@ function renderTimeSeriesChart(canvasId, points, config) {
         },
         x: {
           grid: {
+            drawTicks: false,
             color(context) {
               const axisLabel = points[context.index]?.axisLabel;
               return axisLabel ? "rgba(42, 161, 152, 0.14)" : "rgba(0, 0, 0, 0)";
@@ -251,10 +252,14 @@ function renderTimeSeriesChart(canvasId, points, config) {
               return points[context.index]?.axisLabel ? 1 : 0;
             }
           },
+          border: {
+            display: false
+          },
           ticks: {
             autoSkip: false,
             maxRotation: 0,
             minRotation: 0,
+            padding: 8,
             font: { size: 12 },
             callback(value, index) {
               return points[index]?.axisLabel || "";
@@ -422,7 +427,7 @@ function renderChartCards(entries) {
       yMin: 0,
       yMax: getAdaptiveMax(entries, "swellHeight", 4, 0.5),
       yTitle: "Swell Height (ft)",
-      tickLabel: (value) => `${Number(value).toFixed(0)} ft`,
+      tickLabel: (value) => `${Number(value).toFixed(1)} ft`,
       tooltipLabel: (value) => `${value.toFixed(1)} ft`
     },
     {
