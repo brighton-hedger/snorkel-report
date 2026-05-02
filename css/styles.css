@@ -1977,6 +1977,45 @@ footer {
   line-height: 1.5;
 }
 
+.donovan-direction-strip {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+  gap: 8px;
+}
+
+.donovan-direction-chip {
+  border-radius: 12px;
+  background: #f3fbfa;
+  border: 1px solid rgba(42, 161, 152, 0.1);
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.donovan-direction-chip strong {
+  display: block;
+  color: #688381;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.donovan-direction-chip span {
+  display: block;
+  margin-top: 6px;
+  color: #1f6f6a;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.donovan-direction-chip em {
+  display: block;
+  margin-top: 6px;
+  color: #204e4a;
+  font-style: normal;
+  font-size: 12px;
+}
+
 .donovan-window-head {
   display: flex;
   justify-content: space-between;

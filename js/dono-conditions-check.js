@@ -12,7 +12,7 @@ const DONOVAN_REGION = {
   stationId: "1612340"
 };
 
-const DAY_FORECAST_HOURS = 24;
+const FULL_DAY_FORECAST_DAYS = 2;
 const activeCharts = [];
 const ICONS = {
   wind: "assets/wind_emoji.svg",
@@ -40,6 +40,15 @@ function formatClock(dateLike) {
     hour: "numeric",
     minute: "2-digit"
   });
+}
+
+function directionToArrow(deg) {
+  if (!Number.isFinite(deg)) {
+    return "•";
+  }
+
+  const arrows = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
+  return arrows[Math.round((((deg % 360) + 360) % 360) / 45) % 8];
 }
 
 function formatRange(min, max, digits = 1, unit = "") {
@@ -92,6 +101,26 @@ function getAdaptiveMax(entries, key, baseMax, step) {
   }
 
   return Math.ceil(maxValue / step) * step;
+}
+
+function buildDirectionSamples(entries, directionKey, speedKey) {
+  const samples = entries
+    .filter((entry) => Number.isFinite(entry[directionKey]) && Number.isFinite(entry[speedKey]))
+    .filter((entry) => entry.hour % 3 === 0)
+    .map((entry) => ({
+      label: formatClock(entry.time),
+      direction: Number(entry[directionKey]),
+      speed: Number(entry[speedKey])
+    }));
+
+  return samples.length ? samples : entries
+    .filter((entry) => Number.isFinite(entry[directionKey]) && Number.isFinite(entry[speedKey]))
+    .slice(0, 6)
+    .map((entry) => ({
+      label: formatClock(entry.time),
+      direction: Number(entry[directionKey]),
+      speed: Number(entry[speedKey])
+    }));
 }
 
 function createMetricCard(label, value, subtext) {
@@ -351,6 +380,7 @@ function renderChartCards(entries) {
       title: "Wind Speed",
       subtitle: "Wind trend through the day",
       color: "#d97a27",
+      directionKey: "windDir",
       yMin: 0,
       yMax: getAdaptiveMax(entries, "windSpeed", 30, 5),
       yTitle: "Wind Speed (mph)",
@@ -362,6 +392,7 @@ function renderChartCards(entries) {
       title: "Current Speed",
       subtitle: "Surface current trend through the day",
       color: "#7b61c9",
+      directionKey: "currentDir",
       yMin: 0,
       yMax: getAdaptiveMax(entries, "currentSpeed", 1, 0.25),
       yTitle: "Current Speed (mph)",
@@ -399,6 +430,11 @@ function renderChartCards(entries) {
         <span>${config.subtitle}</span>
       </div>
       <canvas id="donovan-chart-${index}" width="520" height="300"></canvas>
+      ${
+        config.directionKey
+          ? `<div id="donovan-direction-${index}" class="donovan-direction-strip"></div>`
+          : ""
+      }
     </section>
   `).join("");
 
@@ -411,6 +447,20 @@ function renderChartCards(entries) {
       }));
 
     renderTimeSeriesChart(`donovan-chart-${index}`, points, config);
+
+    if (config.directionKey) {
+      const directionEl = document.getElementById(`donovan-direction-${index}`);
+      if (directionEl) {
+        const samples = buildDirectionSamples(entries, config.directionKey, config.key);
+        directionEl.innerHTML = samples.map((sample) => `
+          <div class="donovan-direction-chip">
+            <strong>${sample.label}</strong>
+            <span>${directionToArrow(sample.direction)}</span>
+            <em>${toCardinal(sample.direction)}</em>
+          </div>
+        `).join("");
+      }
+    }
   });
 }
 
@@ -434,7 +484,7 @@ async function initializeDonovanCheck() {
 
   try {
     const [forecast, tideData] = await Promise.all([
-      fetchForecast(DONOVAN_REGION, { forecastHours: DAY_FORECAST_HOURS }),
+      fetchForecast(DONOVAN_REGION, { forecastDays: FULL_DAY_FORECAST_DAYS }),
       fetchTide(DONOVAN_REGION.stationId)
     ]);
 
