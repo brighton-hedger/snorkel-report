@@ -2000,12 +2000,38 @@ footer {
   text-transform: uppercase;
 }
 
-.donovan-direction-chip span {
+.donovan-direction-arrow {
   display: block;
-  margin-top: 6px;
-  color: #1f6f6a;
-  font-size: 22px;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
+  margin: 8px auto 0;
+  position: relative;
+  transform-origin: 50% 50%;
+}
+
+.donovan-direction-arrow::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  width: 2px;
+  height: 16px;
+  background: #1f6f6a;
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.donovan-direction-arrow::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 10px solid #1f6f6a;
+  transform: translateX(-50%);
 }
 
 .donovan-direction-chip em {

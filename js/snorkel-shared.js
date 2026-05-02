@@ -264,7 +264,7 @@
 
     const marineUrl =
       `https://marine-api.open-meteo.com/v1/marine?latitude=${region.lat}&longitude=${region.lng}` +
-      `&hourly=wave_height,swell_wave_height,swell_wave_period,wind_wave_height,wind_wave_period,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,sea_level_height_msl` +
+      `&hourly=wave_height,swell_wave_height,swell_wave_period,swell_wave_direction,wind_wave_height,wind_wave_period,sea_surface_temperature,ocean_current_velocity,ocean_current_direction,sea_level_height_msl` +
       `&${rangeParam}&timezone=auto&length_unit=imperial&wind_speed_unit=mph&temperature_unit=fahrenheit`;
 
     const weatherUrl =
@@ -288,6 +288,7 @@
       waveHeight: marineData.hourly.wave_height?.[index] ?? 0,
       swellHeight: marineData.hourly.swell_wave_height?.[index] ?? 0,
       swellPeriod: marineData.hourly.swell_wave_period?.[index] ?? 0,
+      swellDir: marineData.hourly.swell_wave_direction?.[index] ?? 0,
       windWaveHeight: marineData.hourly.wind_wave_height?.[index] ?? 0,
       windWavePeriod: marineData.hourly.wind_wave_period?.[index] ?? 0,
       temp: marineData.hourly.sea_surface_temperature?.[index] ?? null,

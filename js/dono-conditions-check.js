@@ -42,6 +42,40 @@ function formatClock(dateLike) {
   });
 }
 
+function formatAxisHourLabel(dateLike) {
+  const date = new Date(dateLike);
+  const hour = date.getHours();
+
+  if (hour === 6) {
+    return "6 AM";
+  }
+
+  if (hour === 12) {
+    return "12 PM";
+  }
+
+  if (hour === 18) {
+    return "6 PM";
+  }
+
+  return "";
+}
+
+function formatDirectionalHourLabel(dateLike) {
+  const date = new Date(dateLike);
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric"
+  });
+}
+
+function normalizeDirection(deg) {
+  if (!Number.isFinite(deg)) {
+    return 0;
+  }
+
+  return ((deg % 360) + 360) % 360;
+}
+
 function directionToArrow(deg) {
   if (!Number.isFinite(deg)) {
     return "•";
@@ -106,9 +140,9 @@ function getAdaptiveMax(entries, key, baseMax, step) {
 function buildDirectionSamples(entries, directionKey, speedKey) {
   const samples = entries
     .filter((entry) => Number.isFinite(entry[directionKey]) && Number.isFinite(entry[speedKey]))
-    .filter((entry) => entry.hour % 3 === 0)
+    .filter((entry) => [6, 9, 12, 15, 18, 21].includes(entry.hour))
     .map((entry) => ({
-      label: formatClock(entry.time),
+      label: formatDirectionalHourLabel(entry.time),
       direction: Number(entry[directionKey]),
       speed: Number(entry[speedKey])
     }));
@@ -117,7 +151,7 @@ function buildDirectionSamples(entries, directionKey, speedKey) {
     .filter((entry) => Number.isFinite(entry[directionKey]) && Number.isFinite(entry[speedKey]))
     .slice(0, 6)
     .map((entry) => ({
-      label: formatClock(entry.time),
+      label: formatDirectionalHourLabel(entry.time),
       direction: Number(entry[directionKey]),
       speed: Number(entry[speedKey])
     }));
@@ -209,8 +243,13 @@ function renderTimeSeriesChart(canvasId, points, config) {
         },
         x: {
           ticks: {
-            maxTicksLimit: 8,
-            font: { size: 12 }
+            autoSkip: false,
+            maxRotation: 0,
+            minRotation: 0,
+            font: { size: 12 },
+            callback(value, index) {
+              return points[index]?.axisLabel || "";
+            }
           }
         }
       },
@@ -323,6 +362,7 @@ function renderTideSection(tideData) {
   const tidePoints = (tideData?.curvePredictions?.length ? tideData.curvePredictions : tideData?.predictions || [])
     .map((point) => ({
       label: formatClock(point.time),
+      axisLabel: formatAxisHourLabel(point.time),
       value: Number(point.value)
     }))
     .filter((point) => Number.isFinite(point.value));
@@ -369,6 +409,7 @@ function renderChartCards(entries) {
       title: "Swell Height",
       subtitle: "Primary swell through the day",
       color: "#2aa198",
+      directionKey: "swellDir",
       yMin: 0,
       yMax: getAdaptiveMax(entries, "swellHeight", 4, 0.5),
       yTitle: "Swell Height (ft)",
@@ -443,6 +484,7 @@ function renderChartCards(entries) {
       .filter((entry) => Number.isFinite(entry[config.key]))
       .map((entry) => ({
         label: formatClock(entry.time),
+        axisLabel: formatAxisHourLabel(entry.time),
         value: Number(entry[config.key])
       }));
 
@@ -455,7 +497,7 @@ function renderChartCards(entries) {
         directionEl.innerHTML = samples.map((sample) => `
           <div class="donovan-direction-chip">
             <strong>${sample.label}</strong>
-            <span>${directionToArrow(sample.direction)}</span>
+            <span class="donovan-direction-arrow" style="transform: rotate(${normalizeDirection(sample.direction)}deg);"></span>
             <em>${toCardinal(sample.direction)}</em>
           </div>
         `).join("");
