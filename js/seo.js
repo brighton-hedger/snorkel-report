@@ -10,6 +10,7 @@ const BREADCRUMB_LABELS = {
   blog: "Blog",
   "day-forecast": "Day Forecast",
   "detailed-reports": "Detailed Reports",
+  "dono-conditions-check": "Dono Conditions Check",
   feedback: "Feedback",
   haleiwa: "Haleiwa",
   "hawaii-kai": "Hawaii Kai",

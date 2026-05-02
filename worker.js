@@ -106,6 +106,7 @@ const ROUTE_FILE_MAP = {
   "/blog/wind-swell-visibility": "/blog-wind-swell-visibility.html",
   "/day-forecast": "/day-forecast.html",
   "/detailed-reports": "/detailed-reports.html",
+  "/dono-conditions-check": "/dono-conditions-check.html",
   "/feedback": "/feedback.html",
   "/haleiwa": "/haleiwa.html",
   "/hawaii-kai": "/hawaii-kai.html",
