@@ -2110,6 +2110,10 @@ footer {
 
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
+  .donovan-tide-panel canvas {
+    max-height: none;
+  }
+
   .header-centered {
     flex-direction: column;
   }

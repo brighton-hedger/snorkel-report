@@ -13,6 +13,8 @@ const DONOVAN_REGION = {
 };
 
 const FULL_DAY_FORECAST_DAYS = 2;
+const TIDE_DEFAULT_Y_MIN = -1;
+const TIDE_DEFAULT_Y_MAX = 2.5;
 const activeCharts = [];
 const ICONS = {
   wind: "assets/wind_emoji.svg",
@@ -79,6 +81,10 @@ function normalizeDirection(deg) {
   }
 
   return ((deg % 360) + 360) % 360;
+}
+
+function getResponsiveTideAspectRatio() {
+  return window.innerWidth <= 768 ? 1.55 : 3.4;
 }
 
 function directionToArrow(deg) {
@@ -241,6 +247,7 @@ function renderTimeSeriesChart(canvasId, points, config) {
           },
           ticks: {
             font: { size: 12 },
+            stepSize: config.yStepSize,
             callback(value) {
               return config.tickLabel(value);
             }
@@ -379,13 +386,15 @@ function renderTideSection(tideData) {
   const tideValues = tidePoints.map((point) => point.value);
   const minValue = Math.min(...tideValues);
   const maxValue = Math.max(...tideValues);
-  const padding = 0.4;
+  const yMin = Math.min(TIDE_DEFAULT_Y_MIN, Math.floor(minValue * 2) / 2);
+  const yMax = Math.max(TIDE_DEFAULT_Y_MAX, Math.ceil(maxValue * 2) / 2);
 
   renderTimeSeriesChart("donovan-tide-canvas", tidePoints, {
     color: "#3e94d1",
-    aspectRatio: 3.4,
-    yMin: Math.floor((minValue - padding) * 2) / 2,
-    yMax: Math.ceil((maxValue + padding) * 2) / 2,
+    aspectRatio: getResponsiveTideAspectRatio(),
+    yMin,
+    yMax,
+    yStepSize: 0.5,
     yTitle: "Tide (ft)",
     tickLabel: (value) => `${Number(value).toFixed(1)}'`,
     tooltipLabel: (value) => `${value.toFixed(1)} ft`
