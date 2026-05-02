@@ -2242,6 +2242,43 @@ footer {
     padding: 12px;
   }
 
+  .donovan-direction-strip {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .donovan-direction-chip {
+    padding: 6px 2px;
+    border-radius: 10px;
+  }
+
+  .donovan-direction-chip strong {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+
+  .donovan-direction-arrow {
+    width: 22px;
+    height: 22px;
+    margin-top: 6px;
+  }
+
+  .donovan-direction-arrow::before {
+    top: 3px;
+    height: 12px;
+  }
+
+  .donovan-direction-arrow::after {
+    border-left-width: 5px;
+    border-right-width: 5px;
+    border-bottom-width: 8px;
+  }
+
+  .donovan-direction-chip em {
+    margin-top: 4px;
+    font-size: 11px;
+  }
+
   .home-brand-row img {
     display: none;
   }
