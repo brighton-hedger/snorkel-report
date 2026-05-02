@@ -242,6 +242,15 @@ function renderTimeSeriesChart(canvasId, points, config) {
           }
         },
         x: {
+          grid: {
+            color(context) {
+              const axisLabel = points[context.index]?.axisLabel;
+              return axisLabel ? "rgba(42, 161, 152, 0.14)" : "rgba(0, 0, 0, 0)";
+            },
+            lineWidth(context) {
+              return points[context.index]?.axisLabel ? 1 : 0;
+            }
+          },
           ticks: {
             autoSkip: false,
             maxRotation: 0,
