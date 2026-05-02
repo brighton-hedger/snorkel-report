@@ -45,6 +45,11 @@ function formatClock(dateLike) {
 function formatAxisHourLabel(dateLike) {
   const date = new Date(dateLike);
   const hour = date.getHours();
+  const minute = date.getMinutes();
+
+  if (minute !== 0) {
+    return "";
+  }
 
   if (hour === 6) {
     return "6 AM";
@@ -351,20 +356,6 @@ function renderSummary(entries, tideData) {
   `;
 }
 
-function renderCurrentSnapshot(currentEntry) {
-  const container = document.getElementById("donovan-current-grid");
-  if (!container || !currentEntry) {
-    return;
-  }
-
-  container.innerHTML = [
-    createMetricCard("Wind", `${currentEntry.windSpeed.toFixed(0)} mph ${toCardinal(currentEntry.windDir)}`, "Latest forecast hour."),
-    createMetricCard("Wave", `${currentEntry.waveHeight.toFixed(1)} ft`, "Combined sea state right now."),
-    createMetricCard("Swell", `${currentEntry.swellHeight.toFixed(1)} ft @ ${currentEntry.swellPeriod.toFixed(0)}s`, "Primary swell snapshot."),
-    createMetricCard("Current", `${currentEntry.currentSpeed.toFixed(1)} mph ${toCardinal(currentEntry.currentDir)}`, "Surface current right now.")
-  ].join("");
-}
-
 function renderTideSection(tideData) {
   const summaryEl = document.getElementById("donovan-tide-summary");
   if (!summaryEl) {
@@ -412,6 +403,7 @@ function renderChartCards(entries) {
       title: "Wave Height",
       subtitle: "Combined sea state through the day",
       color: "#2f6fb6",
+      directionKey: "waveDir",
       yMin: 0,
       yMax: getAdaptiveMax(entries, "waveHeight", 6, 1),
       yTitle: "Wave Height (ft)",
@@ -546,14 +538,11 @@ async function initializeDonovanCheck() {
 
     const todayKey = getDateKey(new Date());
     const todayEntries = (forecast.hourly || []).filter((entry) => entry.dateKey === todayKey);
-    const currentEntry = forecast.current || todayEntries[0] || null;
-
-    if (!todayEntries.length || !currentEntry) {
+    if (!todayEntries.length) {
       throw new Error("There is not enough forecast data loaded for today's conditions.");
     }
 
     renderSummary(todayEntries, tideData);
-    renderCurrentSnapshot(currentEntry);
     renderTideSection(tideData);
     renderChartCards(todayEntries);
   } catch (error) {

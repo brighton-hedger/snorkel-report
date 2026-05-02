@@ -1910,6 +1910,7 @@ footer {
 
 .donovan-summary-chip-row {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .donovan-metric-grid {
@@ -1925,6 +1926,30 @@ footer {
   border: 1px solid rgba(42, 161, 152, 0.12);
   border-radius: 18px;
   padding: 16px;
+}
+
+.donovan-summary-chip-row .condition-chip {
+  padding: 14px 16px;
+  min-height: 88px;
+  gap: 8px;
+}
+
+.donovan-summary-chip-row .condition-chip span {
+  font-size: 18px;
+}
+
+.donovan-summary-chip-row .condition-chip strong {
+  font-size: 13px;
+}
+
+.donovan-summary-chip-row .condition-chip em {
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.donovan-summary-chip-row .chip-icon {
+  width: 22px;
+  height: 22px;
 }
 
 .donovan-metric-card strong,
