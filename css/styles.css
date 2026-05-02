@@ -1861,6 +1861,157 @@ footer {
   line-height: 1.6;
 }
 
+.donovan-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.donovan-hero-pill {
+  min-width: 220px;
+  background: linear-gradient(180deg, #f8fefd, #eef8f7);
+  border: 1px solid rgba(42, 161, 152, 0.12);
+  border-radius: 18px;
+  padding: 14px 16px;
+}
+
+.donovan-hero-pill strong {
+  display: block;
+  color: #1f6f6a;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.donovan-hero-pill span {
+  display: block;
+  margin-top: 6px;
+  color: #345552;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.donovan-card {
+  max-width: 1120px;
+  margin: 0 auto 16px;
+}
+
+.donovan-card h2 {
+  margin: 0 0 14px;
+}
+
+.donovan-brief-head p {
+  margin: 0;
+  color: #466764;
+  line-height: 1.65;
+}
+
+.donovan-summary-chip-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.donovan-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.donovan-metric-card,
+.donovan-window-card,
+.donovan-tide-event {
+  background: linear-gradient(180deg, #f8fefd, #eef8f7);
+  border: 1px solid rgba(42, 161, 152, 0.12);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.donovan-metric-card strong,
+.donovan-window-head h3,
+.donovan-tide-event strong {
+  display: block;
+  color: #1f6f6a;
+}
+
+.donovan-metric-card span {
+  display: block;
+  margin-top: 8px;
+  color: #173f3d;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.donovan-metric-card p,
+.donovan-window-card p,
+.donovan-tide-event p,
+.donovan-tide-summary p {
+  margin: 8px 0 0;
+  color: #466764;
+  line-height: 1.55;
+}
+
+.donovan-window-grid,
+.donovan-overview-grid,
+.donovan-tide-list {
+  display: grid;
+  gap: 12px;
+}
+
+.donovan-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.donovan-chart-panel {
+  max-width: none;
+}
+
+.donovan-tide-panel {
+  max-width: 920px;
+}
+
+.donovan-chart-label span {
+  line-height: 1.5;
+}
+
+.donovan-window-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.donovan-window-head span,
+.donovan-tide-event span {
+  color: #5f7b78;
+  font-size: 14px;
+}
+
+.donovan-window-stats {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  color: #284d4a;
+}
+
+.donovan-window-stats li + li {
+  margin-top: 6px;
+}
+
+.donovan-tide-summary {
+  margin-bottom: 12px;
+}
+
+.donovan-tide-list {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.donovan-overview-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 768px) {
   .header-centered {
@@ -1970,6 +2121,8 @@ footer {
   .feedback-grid,
   .feedback-metrics-grid,
   .blog-grid,
+  .donovan-charts-grid,
+  .donovan-metric-grid,
   .detailed-reports-grid,
   .region-metrics-grid,
   .home-hero,
