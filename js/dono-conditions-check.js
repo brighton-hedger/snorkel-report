@@ -230,7 +230,7 @@ function renderTimeSeriesChart(canvasId, points, config) {
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      aspectRatio: 1.55,
+      aspectRatio: config.aspectRatio || 1.55,
       scales: {
         y: {
           min: config.yMin,
@@ -383,6 +383,7 @@ function renderTideSection(tideData) {
 
   renderTimeSeriesChart("donovan-tide-canvas", tidePoints, {
     color: "#3e94d1",
+    aspectRatio: 3.4,
     yMin: Math.floor((minValue - padding) * 2) / 2,
     yMax: Math.ceil((maxValue + padding) * 2) / 2,
     yTitle: "Tide (ft)",

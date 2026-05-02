@@ -1995,7 +1995,13 @@ footer {
 }
 
 .donovan-tide-panel {
-  max-width: 920px;
+  max-width: none;
+  width: 100%;
+}
+
+.donovan-tide-panel canvas {
+  width: 100% !important;
+  max-height: 260px;
 }
 
 .donovan-chart-label span {
