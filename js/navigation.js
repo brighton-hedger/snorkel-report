@@ -16,18 +16,18 @@ const DETAILED_REPORT_SLUGS = new Set([
 ]);
 
 const NAV_LINKS = [
-  { href: 'live-report.html', label: 'Live Report', route: 'live-report' },
-  { href: 'day-forecast.html', label: 'Day Forecast', route: 'day-forecast' },
-  { href: 'week-forecast.html', label: 'Week Forecast', route: 'week-forecast' },
-  { href: 'map.html', label: 'Map', route: 'map' },
-  { href: 'detailed-reports.html', label: 'Detailed Reports', route: 'detailed-reports' },
-  { href: 'search.html', label: 'Search', route: 'search' }
+  { href: '/live-report', label: 'Live Report', route: 'live-report' },
+  { href: '/day-forecast', label: 'Day Forecast', route: 'day-forecast' },
+  { href: '/week-forecast', label: 'Week Forecast', route: 'week-forecast' },
+  { href: '/map', label: 'Map', route: 'map' },
+  { href: '/detailed-reports', label: 'Detailed Reports', route: 'detailed-reports' },
+  { href: '/search', label: 'Search', route: 'search' }
 ];
 
 const MORE_LINKS = [
-  { href: 'feedback.html', label: 'Feedback', route: 'feedback' },
-  { href: 'about.html', label: 'About', route: 'about' },
-  { href: 'blog.html', label: 'Blog', route: 'blog' }
+  { href: '/feedback', label: 'Feedback', route: 'feedback' },
+  { href: '/about', label: 'About', route: 'about' },
+  { href: '/blog', label: 'Blog', route: 'blog' }
 ];
 
 function initializeNavigation() {
@@ -71,10 +71,10 @@ function hydrateNavigation() {
   nav.innerHTML = '';
 
   const logoLink = document.createElement('a');
-  logoLink.href = 'index.html';
+  logoLink.href = '/';
   logoLink.className = 'nav-home-logo';
   logoLink.setAttribute('aria-label', 'Go to home page');
-  logoLink.innerHTML = '<img src="assets/snorkeling_turtle_favicon.svg" alt="">';
+  logoLink.innerHTML = '<img src="/assets/snorkeling_turtle_favicon.svg" alt="">';
   nav.appendChild(logoLink);
 
   // Desktop navigation (hidden on mobile)
