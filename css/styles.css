@@ -245,6 +245,29 @@ nav a.active {
   margin-top: 8px;
 }
 
+.water-quality-warning-list + .water-quality-warning-list {
+  margin-top: 8px;
+}
+
+.jellyfish-warning {
+  background: linear-gradient(135deg, #e5f7ff 0%, #d8edff 100%);
+  border-color: #79bfea;
+  color: #12466b;
+  box-shadow: 0 2px 8px rgba(18, 70, 107, 0.1);
+}
+
+.jellyfish-warning .water-quality-warning-head strong {
+  color: #075985;
+}
+
+.jellyfish-warning .water-quality-warning-head span {
+  color: #1d75a8;
+}
+
+.jellyfish-warning .water-quality-warning-meta {
+  color: #245f86;
+}
+
 /* Main Container */
 .container {
   max-width: 1440px;

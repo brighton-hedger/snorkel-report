@@ -8,6 +8,7 @@ const {
   getScoreColor,
   toCardinal,
   getRegionAdvisories,
+  getBoxJellyfishAlert,
   escapeHtml
 } = window.SnorkelShared;
 
@@ -85,6 +86,26 @@ function buildBrownWaterWarningsMarkup(advisories, compact = false) {
           </section>
         `;
       }).join("")}
+    </div>
+  `;
+}
+
+function buildBoxJellyfishWarningMarkup(compact = false) {
+  const alert = getBoxJellyfishAlert();
+  if (!alert) {
+    return "";
+  }
+
+  return `
+    <div class="water-quality-warning-list${compact ? " water-quality-warning-list-compact" : ""}">
+      <section class="water-quality-warning jellyfish-warning${compact ? " water-quality-warning-compact" : ""}">
+        <div class="water-quality-warning-head">
+          <strong>Box Jellyfish Alert</strong>
+          <span>${escapeHtml(alert.cause)}</span>
+        </div>
+        <p>${escapeHtml(alert.headline)}</p>
+        <div class="water-quality-warning-meta">${escapeHtml(alert.details)}</div>
+      </section>
     </div>
   `;
 }
@@ -517,7 +538,7 @@ function buildSpotCard(result) {
   const bestScoreColor = getScoreColor(bestScore);
   const protectedBadge = region.protected ? '<span class="protected-badge">Protected</span>' : "";
   const chips = buildConditionChips(metrics, tideData, bestTime, bestScore);
-  const warningMarkup = buildBrownWaterWarningsMarkup(advisories, true);
+  const warningMarkup = `${buildBrownWaterWarningsMarkup(advisories, true)}${buildBoxJellyfishWarningMarkup(true)}`;
   const goodList = (conditionBreakdown?.good?.length
     ? conditionBreakdown.good
     : ["A few signals are neutral right now, so this spot is not getting major help from the conditions."])

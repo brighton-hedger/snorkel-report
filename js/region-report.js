@@ -11,6 +11,7 @@ const {
   toCardinal,
   getDateKey,
   getRegionAdvisories,
+  getBoxJellyfishAlert,
   escapeHtml
 } = window.SnorkelShared;
 
@@ -81,6 +82,26 @@ function buildBrownWaterWarningsMarkup(advisories) {
           </section>
         `;
       }).join("")}
+    </div>
+  `;
+}
+
+function buildBoxJellyfishWarningMarkup() {
+  const alert = getBoxJellyfishAlert();
+  if (!alert) {
+    return "";
+  }
+
+  return `
+    <div class="water-quality-warning-list">
+      <section class="water-quality-warning jellyfish-warning">
+        <div class="water-quality-warning-head">
+          <strong>Box Jellyfish Alert</strong>
+          <span>${escapeHtml(alert.cause)}</span>
+        </div>
+        <p>${escapeHtml(alert.headline)}</p>
+        <div class="water-quality-warning-meta">${escapeHtml(alert.details)}</div>
+      </section>
     </div>
   `;
 }
@@ -567,6 +588,7 @@ async function loadRegionPage() {
       <section class="content-card">
         <h2>Live Conditions</h2>
         ${buildBrownWaterWarningsMarkup(advisories)}
+        ${buildBoxJellyfishWarningMarkup()}
         <div class="region-metrics-grid">
           ${buildCurrentMetricsMarkup(metrics, tideData, bestTime)}
         </div>

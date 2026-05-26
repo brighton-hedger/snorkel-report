@@ -228,6 +228,44 @@
     return `${year}-${month}-${day}`;
   }
 
+  function getMoonAgeDays(date = new Date()) {
+    const synodicMonthDays = 29.530588853;
+    const knownFullMoonUtc = Date.UTC(2000, 0, 21, 4, 40);
+    const hawaiiDateParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Pacific/Honolulu",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric"
+    })
+      .formatToParts(date)
+      .reduce((parts, part) => {
+        if (part.type !== "literal") {
+          parts[part.type] = Number(part.value);
+        }
+        return parts;
+      }, {});
+    const hawaiiNoonUtc = Date.UTC(hawaiiDateParts.year, hawaiiDateParts.month - 1, hawaiiDateParts.day, 22);
+    const daysSinceKnownFullMoon = (hawaiiNoonUtc - knownFullMoonUtc) / 86400000;
+    return ((daysSinceKnownFullMoon % synodicMonthDays) + synodicMonthDays) % synodicMonthDays;
+  }
+
+  function getBoxJellyfishAlert(date = new Date()) {
+    const moonAgeDays = getMoonAgeDays(date);
+    const dayAfterFullMoon = Math.floor(moonAgeDays);
+
+    if (dayAfterFullMoon < 8 || dayAfterFullMoon > 10) {
+      return null;
+    }
+
+    return {
+      dayAfterFullMoon,
+      headline:
+        "Elevated box jellyfish probability today. Check posted beach signs and scan the waterline before entering.",
+      cause: `Day ${dayAfterFullMoon} after full moon`,
+      details: "Box jellyfish arrivals are most common around 8-10 days after a full moon, especially near south and leeward shorelines."
+    };
+  }
+
   function getCurrentHourIndex(times) {
     const now = new Date();
     const nextIndex = times.findIndex((time) => new Date(time) > now);
@@ -659,6 +697,7 @@
     toCardinal,
     getScoreColor,
     getDateKey,
+    getBoxJellyfishAlert,
     fetchJson,
     fetchForecast,
     fetchTide,
